@@ -1,6 +1,6 @@
 # HTML Docs
 
-A minimal Obsidian plugin to bring the [unreasonable effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
+A minimal plugin to bring the [unreasonable effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
 
 * The HTML is rendered in a sandboxed `<iframe>`.
 * JS can run inside the HTML for interactivity, but the iframe is isolated from Obsidian and your vault.
@@ -10,7 +10,7 @@ Fork and extend if you want other features.
 
 ## Demo
 
-This plug lets you write your docs as .md or .html and open both inside Obsidian
+A minimal plugin that lets you write docs in .md or .html and open both inside Obsidian
 
 ![](demo.png)
 
@@ -49,6 +49,14 @@ npm run build    # production bundle
 ```
 
 Open any `.html` or `.htm` file in your vault — Obsidian will route it through the plugin's view.
+
+For a tighter loop, symlink your vault's plugin folder to the build output so every rebuild is picked up without a copy:
+
+```bash
+ln -sf "$(pwd)/dist/html-docs" "<vault>/.obsidian/plugins/html-docs"
+```
+
+Then `obsidian-cli plugin:reload id=html-docs` (or `Cmd-P → Reload app`) loads the new build.
 
 ## Test
 
