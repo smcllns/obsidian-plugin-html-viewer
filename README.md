@@ -1,8 +1,10 @@
 # HTML Viewer
 
-A minimal Obsidian plugin that lets you open `.html` (and `.htm`) files inside Obsidian, with JavaScript execution.
+A minimal Obsidian plugin that lets you bring the (unreasonanble effectiveness of HTML)[https://x.com/trq212/status/2052809885763747935] to Obsidian.
 
-The file is rendered in a sandboxed `<iframe>` (`sandbox="allow-scripts allow-popups allow-forms"`). Scripts run, but the iframe is isolated from Obsidian and from your vault.
+* The html is rendered in a sandboxed `<iframe>`.
+* Javascript run for interactivity, but the iframe is isolated from Obsidian and from your vault (`sandbox="allow-scripts allow-popups allow-forms"`)
+* Nothing else, fork and extend if you want other features.
 
 ## Install (manual)
 
@@ -18,4 +20,4 @@ npm install
 npm run dev
 ```
 
-Open any `.html` file in your vault — Obsidian will route it through the plugin's view.
+Open any `.html` or `.htm` file in your vault — Obsidian will route it through the plugin's view.
