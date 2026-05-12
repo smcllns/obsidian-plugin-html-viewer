@@ -1,0 +1,9 @@
+{
+	"id": "html-viewer",
+	"name": "HTML Viewer",
+	"version": "1.0.0",
+	"minAppVersion": "1.4.0",
+	"description": "View .html files inside Obsidian, with JavaScript execution in a sandboxed iframe.",
+	"author": "smcllns",
+	"isDesktopOnly": false
+}
