@@ -14,11 +14,17 @@ A minimal plugin that lets you work with .md AND .html docs inside Obsidian
 
 ![](demo.png)
 
-## Install (manual)
+## Install
+
+The easy path: [install from the Obsidian Community Plugins directory](https://community.obsidian.md/plugins/html-docs), or browse to **Settings → Community plugins → Browse**, search **HTML Docs**, and click Install.
+
+After install, turn on **Settings → Files & Links → Detect all file extensions** so `.html` files appear in the file explorer. The plugin shows a one-time notice on load if it isn't already on.
+
+### Install manually
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/smcllns/obsidian-plugin-html-docs/releases/latest) and drop them into `<vault>/.obsidian/plugins/html-docs/`.
 2. Enable **HTML Docs** in Obsidian's Community Plugins settings.
-3. Turn on **Settings → Files & Links → Detect all file extensions** so `.html` files appear in the file explorer. The plugin shows a one-time notice on load if it isn't already on.
+3. Turn on the **Detect all file extensions** setting as above.
 
 Releases are built and signed by GitHub Actions ([release.yml](.github/workflows/release.yml)) so the binaries carry a [build attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) you can verify against the source.
 
