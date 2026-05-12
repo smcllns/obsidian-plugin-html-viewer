@@ -1,9 +1,9 @@
-# HTML Viewer
+# HTML Docs
 
 A minimal Obsidian plugin to bring the [unreasonable effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
 
 * The HTML is rendered in a sandboxed `<iframe>`.
-* JS can run inside the HTML for interactivity, but the iframe is isolated from Obsidian and your vault (`sandbox="allow-scripts allow-popups allow-forms"`).
+* JS can run inside the HTML for interactivity, but the iframe is isolated from Obsidian and your vault.
 * Nothing else. The plugin is ~75 lines of code, ~100 lines of config, and ~520 lines of test.
 
 Fork and extend if you want other features.
@@ -29,8 +29,8 @@ Which blocks:
 
 1. `npm install`
 2. `npm run build`
-3. Copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/html-viewer/`.
-4. Enable **HTML Viewer** in Obsidian's Community Plugins settings.
+3. Copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/html-docs/`.
+4. Enable **HTML Docs** in Obsidian's Community Plugins settings.
 
 ## Dev
 
@@ -56,7 +56,7 @@ See `test/fixture.html` for the full list of features exercised — and the inli
 
 ## The original prompt
 
-```
+```markdown
 Research obsidian plugin best practices. Then write a minimalist obsidian plugin which lets me view html files similar to md files inside obsidian.
 They will be single html files but they need to be able to run JavaScript.
 

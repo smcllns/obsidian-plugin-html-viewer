@@ -1,6 +1,6 @@
 {
-	"id": "html-viewer",
-	"name": "HTML Viewer",
+	"id": "html-docs",
+	"name": "HTML Docs",
 	"version": "1.0.0",
 	"minAppVersion": "1.4.0",
 	"description": "View .html files inside Obsidian, with JavaScript execution in a sandboxed iframe.",

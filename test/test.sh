@@ -13,8 +13,8 @@
 
 set -euo pipefail
 
-PLUGIN_ID="html-viewer"
-FIXTURE_REL="_html-viewer-test-fixture.html"
+PLUGIN_ID="html-docs"
+FIXTURE_REL="_html-docs-test-fixture.html"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FIXTURE_SRC="$ROOT/test/fixture.html"
 
@@ -46,7 +46,7 @@ cp "$FIXTURE_SRC" "$FIXTURE_DEST"
 
 cleanup() {
   rm -f "$FIXTURE_DEST"
-  # close any html-viewer leaves we left open
+  # close any html-docs leaves we left open
   oeval "app.workspace.getLeavesOfType('$PLUGIN_ID').forEach(l => l.detach()); 'ok'" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -57,7 +57,7 @@ oeval "
   window.__hvResults = null;
   if (window.__hvListener) window.removeEventListener('message', window.__hvListener);
   window.__hvListener = (e) => {
-    if (e.data && e.data.type === 'html-viewer-test-results') window.__hvResults = e.data;
+    if (e.data && e.data.type === 'html-docs-test-results') window.__hvResults = e.data;
   };
   window.addEventListener('message', window.__hvListener);
   'ok'
@@ -73,7 +73,7 @@ sleep 6
 
 OUTER="$(oeval "
   const view = app.workspace.activeLeaf && app.workspace.activeLeaf.view;
-  const iframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-viewer-iframe');
+  const iframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-docs-iframe');
   let contentDoc = null;
   try { contentDoc = iframe ? !!iframe.contentDocument : null; } catch (e) { contentDoc = false; }
   JSON.stringify({
@@ -81,7 +81,7 @@ OUTER="$(oeval "
     file: view && view.file && view.file.path,
     hasIframe: !!iframe,
     sandbox: iframe && iframe.getAttribute('sandbox'),
-    hasSrcdoc: iframe ? !!iframe.srcdoc : false,
+    srcIsBlob: iframe ? iframe.src.startsWith('blob:') : false,
     contentDocAccessible: contentDoc,
   })
 ")"
@@ -100,11 +100,11 @@ check() {
 }
 
 echo "Outer assertions (Obsidian-side):"
-check "view type is html-viewer"          "$(echo "$OUTER" | jq -r .viewType)" "html-viewer"
+check "view type is html-docs"          "$(echo "$OUTER" | jq -r .viewType)" "html-docs"
 check "fixture file is open"               "$(echo "$OUTER" | jq -r .file)"      "$FIXTURE_REL"
 check "iframe rendered"                    "$(echo "$OUTER" | jq -r .hasIframe)" "true"
 check "sandbox is locked down"             "$(echo "$OUTER" | jq -r .sandbox)"   "allow-scripts allow-popups allow-forms"
-check "srcdoc is populated"                "$(echo "$OUTER" | jq -r .hasSrcdoc)" "true"
+check "iframe.src is a blob URL"           "$(echo "$OUTER" | jq -r .srcIsBlob)" "true"
 check "contentDocument is cross-origin"    "$(echo "$OUTER" | jq -r .contentDocAccessible)" "false"
 
 echo

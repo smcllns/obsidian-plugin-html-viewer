@@ -1,5 +1,5 @@
 {
-	"name": "html-viewer",
+	"name": "html-docs",
 	"version": "1.0.0",
 	"description": "View .html files inside Obsidian, with JavaScript execution in a sandboxed iframe.",
 	"main": "main.js",

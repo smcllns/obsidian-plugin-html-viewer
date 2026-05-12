@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>HTML Viewer — test page</title>
+<title>HTML Docs — test page</title>
 <style>
   :root {
     color-scheme: light dark;
@@ -87,7 +87,7 @@
 </style>
 </head>
 <body>
-  <h1>HTML Viewer — feature test</h1>
+  <h1>HTML Docs — feature test</h1>
   <p class="lead">Every card below runs a check and reports back. The page also demonstrates the rendering inline.</p>
 
   <div class="summary">
@@ -132,9 +132,9 @@
     const banner = document.createElement('div');
     banner.className = 'context-warning';
     banner.innerHTML =
-      '<strong>Heads up:</strong> this page is not running inside the HTML Viewer plugin in Obsidian. ' +
+      '<strong>Heads up:</strong> this page is not running inside the HTML Docs plugin in Obsidian. ' +
       'Sandbox-isolation results below reflect <em>this viewer\'s</em> policy (browser preview, IDE, etc.), not the plugin\'s. ' +
-      'To exercise the real plugin sandbox, open this file in Obsidian with <code>html-viewer</code> enabled.';
+      'To exercise the real plugin sandbox, open this file in Obsidian with <code>html-docs</code> enabled.';
     const summary = document.querySelector('.summary');
     summary.parentNode.insertBefore(banner, summary.nextSibling);
   })();
@@ -340,7 +340,7 @@
   })();
 
   (function () {
-    fetch('https://httpbin.org/get?probe=html-viewer', { method: 'GET' })
+    fetch('https://httpbin.org/get?probe=html-docs', { method: 'GET' })
       .then((r) => r.json())
       .then((j) => card('net', 'Fetch (cross-origin, CORS)', 'pass', 'echoed probe=' + (j && j.args && j.args.probe)))
       .catch((e) => card('net', 'Fetch (cross-origin, CORS)', 'skip', 'no network or CORS blocked: ' + e.message))
@@ -376,7 +376,7 @@
     pill.textContent = fail > 0 ? '✗ ' + fail + ' failed' : '✓ all good';
     text.textContent = pass + ' passed · ' + fail + ' failed · ' + skip + ' skipped';
     try {
-      window.parent.postMessage({ type: 'html-viewer-test-results', pass, fail, skip, tests }, '*');
+      window.parent.postMessage({ type: 'html-docs-test-results', pass, fail, skip, tests }, '*');
     } catch (e) { /* parent unreachable; postMessage to opaque origin still typically works */ }
   }
 
