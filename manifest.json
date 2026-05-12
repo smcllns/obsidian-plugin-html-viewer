@@ -1,7 +1,7 @@
 {
 	"id": "html-docs",
 	"name": "HTML Docs",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "1.4.0",
 	"description": "A minimal zero-dependency plugin that lets you write docs in .md or .html and open both inside your vault.",
 	"author": "smcllns",

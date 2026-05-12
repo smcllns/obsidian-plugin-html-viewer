@@ -1,6 +1,6 @@
 # HTML Docs
 
-A minimal plugin to bring the [unreasonable effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
+A zero-dependency minimal plugin to bring the [unreasonable effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
 
 * The HTML is rendered in a sandboxed `<iframe>`.
 * JS can run inside the HTML for interactivity, but the iframe is isolated from Obsidian and your vault.
@@ -10,17 +10,19 @@ Fork and extend if you want other features.
 
 ## Demo
 
-A minimal plugin that lets you write docs in .md or .html and open both inside Obsidian
+A minimal plugin that lets you work with .md AND .html docs inside Obsidian
 
 ![](demo.png)
 
 ## Install (manual)
 
-1. Copy the `dist/html-docs/` folder into your vault at `<vault>/.obsidian/plugins/` (so the plugin lives at `<vault>/.obsidian/plugins/html-docs/`).
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/smcllns/obsidian-plugin-html-docs/releases/latest) and drop them into `<vault>/.obsidian/plugins/html-docs/`.
 2. Enable **HTML Docs** in Obsidian's Community Plugins settings.
 3. Turn on **Settings → Files & Links → Detect all file extensions** so `.html` files appear in the file explorer. The plugin shows a one-time notice on load if it isn't already on.
 
-To build from source instead: `npm install && npm run build` rebuilds `dist/html-docs/`.
+Releases are built and signed by GitHub Actions ([release.yml](.github/workflows/release.yml)) so the binaries carry a [build attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) you can verify against the source.
+
+To build from source instead: `npm install && npm run build` produces `dist/html-docs/` ready to copy.
 
 ## What works
 

@@ -1,6 +1,6 @@
 {
 	"name": "html-docs",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "A minimal zero-dependency Obsidian plugin that lets you write docs in .md or .html and open both inside Obsidian.",
 	"main": "main.js",
 	"scripts": {
