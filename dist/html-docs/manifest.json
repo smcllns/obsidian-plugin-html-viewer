@@ -1,9 +1,9 @@
 {
 	"id": "html-docs",
 	"name": "HTML Docs",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "1.4.0",
-	"description": "View .html files inside Obsidian, with JavaScript execution in a sandboxed iframe.",
+	"description": "A minimal zero-dependency plugin that lets you write docs in .md or .html and open both inside your vault.",
 	"author": "smcllns",
 	"authorUrl": "https://github.com/smcllns",
 	"isDesktopOnly": false
