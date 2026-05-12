@@ -1,10 +1,12 @@
 # HTML Viewer
 
-A minimal Obsidian plugin that lets you bring the (unreasonanble effectiveness of HTML)[https://x.com/trq212/status/2052809885763747935] to Obsidian.
+A minimal Obsidian plugin to bring the [unreasonanble effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
 
 * The html is rendered in a sandboxed `<iframe>`.
 * Javascript run for interactivity, but the iframe is isolated from Obsidian and from your vault (`sandbox="allow-scripts allow-popups allow-forms"`)
-* Nothing else, fork and extend if you want other features.
+* Nothing else
+
+Fork and extend if you want other features.
 
 ## What works
 
@@ -49,3 +51,17 @@ npm test
 Requires Obsidian running with a vault open, the plugin installed and enabled, and `jq` available. The script copies `test/fixture.html` into the vault temporarily, opens it, verifies the iframe shape from outside Obsidian and collects the iframe's own self-test results via `postMessage`, then cleans up.
 
 See `test/fixture.html` for the full list of features exercised — and the inline notes for what is intentionally blocked.
+
+
+## The original prompt
+
+```
+Research obsidian plugin best practices. Then write a minimalist obsidian plugin which lets me view html files similar to md files inside obsidian.
+They will be single html files but they need to be able to run JavaScript.
+
+I want to avoid complexity and aim for a simple and reliable.
+
+Include a test html page which contains all the components we expect to work (include svg).
+At the bottom include any components that are known to **not** work.
+Include a test runner in the repo to exercise and validate so we have clear expectations of what should work and small automated test suite.
+```
