@@ -69,6 +69,18 @@
   .footer ul { padding-left: 20px; }
   .footer li { margin-bottom: 4px; }
   .footer code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; }
+  .context-warning {
+    margin: 16px 0 0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .context-warning strong { color: #fde68a; }
+  .context-warning code { background: rgba(0,0,0,0.25); padding: 1px 6px; border-radius: 4px; }
   @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
   .spinning { animation: spin 2s linear infinite; transform-origin: center; }
 </style>
@@ -108,6 +120,24 @@
       <li>Service workers, geolocation, clipboard, notifications, and most permission-gated APIs</li>
     </ul>
   </div><script>
+  // If window.parent reads succeed, we are NOT inside this plugin's
+  // sandboxed iframe — either rendered standalone (browser, IDE preview)
+  // or wrapped by a more permissive sandbox. Flag it so the reader
+  // doesn't mistake the host's sandbox policy for the plugin's.
+  (function () {
+    let outsidePlugin = false;
+    try { void window.parent.location.href; outsidePlugin = true; } catch (e) { /* properly isolated */ }
+    if (!outsidePlugin) return;
+    const banner = document.createElement('div');
+    banner.className = 'context-warning';
+    banner.innerHTML =
+      '<strong>Heads up:</strong> this page is not running inside the HTML Viewer plugin in Obsidian. ' +
+      'Sandbox-isolation results below reflect <em>this viewer\'s</em> policy (browser preview, IDE, etc.), not the plugin\'s. ' +
+      'To exercise the real plugin sandbox, open this file in Obsidian with <code>html-viewer</code> enabled.';
+    const summary = document.querySelector('.summary');
+    summary.parentNode.insertBefore(banner, summary.nextSibling);
+  })();
+
   const tests = [];
   const SECS = {
     render: document.getElementById('sec-render'),
