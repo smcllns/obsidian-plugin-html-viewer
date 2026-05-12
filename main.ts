@@ -55,7 +55,7 @@ class HtmlView extends FileView {
 		// is created with the parent's origin — some Chromium versions
 		// don't fully re-apply the sandbox on the subsequent navigation,
 		// leaking same-origin privileges into user HTML.
-		const iframe = document.createElement("iframe");
+		const iframe = activeDocument.createElement("iframe");
 		iframe.className = "html-docs-iframe";
 		// allow-scripts lets the page's JS run; omitting allow-same-origin
 		// keeps it isolated from Obsidian and the user's vault.
@@ -79,7 +79,8 @@ export default class HtmlDocsPlugin extends Plugin {
 		// the extension only routes the view, it doesn't add to that
 		// filter. Without this setting, the user never sees their .html
 		// files in the explorer.
-		const showUnsupported = (this.app.vault as any).getConfig?.("showUnsupportedFiles");
+		const vault = this.app.vault as { getConfig?: (key: string) => unknown };
+		const showUnsupported = vault.getConfig?.("showUnsupportedFiles");
 		if (showUnsupported === false) {
 			new Notice(
 				"HTML Docs: enable 'Detect all file extensions' in Settings → Files & Links to see .html files in the file explorer.",
