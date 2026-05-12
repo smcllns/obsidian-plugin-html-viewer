@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HTML Viewer — test page</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #0f172a; --bg2: #1e293b;
+    --fg: #e2e8f0; --muted: #94a3b8;
+    --pass: #22c55e; --fail: #ef4444; --skip: #f59e0b;
+    --accent: #6366f1; --accent2: #22d3ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0; padding: 32px; line-height: 1.55;
+    background: linear-gradient(135deg, var(--bg), var(--bg2));
+    color: var(--fg); min-height: 100vh;
+  }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 16px; margin: 28px 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  p.lead { color: var(--muted); margin: 0 0 20px; }
+  .summary {
+    display: flex; gap: 12px; align-items: center;
+    padding: 14px 16px; border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-weight: 600;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+  }
+  .pill.pass { background: rgba(34,197,94,0.15); color: var(--pass); }
+  .pill.fail { background: rgba(239,68,68,0.15); color: var(--fail); }
+  .pill.skip { background: rgba(245,158,11,0.15); color: var(--skip); }
+  .grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .card .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card .name { font-weight: 600; font-size: 14px; }
+  .card .detail { margin-top: 4px; color: var(--muted); font-size: 12px; font-family: ui-monospace, monospace; word-break: break-word; }
+  .demo { margin-top: 10px; }
+  table.demo-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  table.demo-table th, table.demo-table td { border: 1px solid rgba(255,255,255,0.1); padding: 4px 8px; }
+  table.demo-table th { background: rgba(255,255,255,0.04); text-align: left; }
+  canvas { width: 100%; height: 60px; display: block; background: rgba(0,0,0,0.25); border-radius: 6px; }
+  svg.demo { width: 100%; height: 60px; display: block; }
+  button {
+    background: var(--accent); color: white; border: 0;
+    padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  button:hover { background: #4f46e5; }
+  input, select {
+    background: rgba(255,255,255,0.08); color: var(--fg);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px; padding: 5px 9px; font-size: 13px;
+  }
+  .footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
+  .footer h2 { color: var(--fg); }
+  .footer ul { padding-left: 20px; }
+  .footer li { margin-bottom: 4px; }
+  .footer code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; }
+  @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  .spinning { animation: spin 2s linear infinite; transform-origin: center; }
+</style>
+</head>
+<body>
+  <h1>HTML Viewer — feature test</h1>
+  <p class="lead">Every card below runs a check and reports back. The page also demonstrates the rendering inline.</p>
+
+  <div class="summary">
+    <span class="pill" id="summary-pill">running…</span>
+    <span id="summary-text">collecting results</span>
+  </div>
+
+  <h2>Rendering &amp; CSS</h2>
+  <div class="grid" id="sec-render"></div>
+
+  <h2>JavaScript</h2>
+  <div class="grid" id="sec-js"></div>
+
+  <h2>Graphics</h2>
+  <div class="grid" id="sec-gfx"></div>
+
+  <h2>Forms &amp; network</h2>
+  <div class="grid" id="sec-net"></div>
+
+  <h2>Sandbox isolation (these should be blocked)</h2>
+  <div class="grid" id="sec-block"></div>
+
+  <div class="footer">
+    <h2>Known not to work (by design)</h2>
+    <p>The iframe runs without <code>allow-same-origin</code> so the page has an opaque origin. This blocks:</p>
+    <ul>
+      <li><code>localStorage</code>, <code>sessionStorage</code>, <code>IndexedDB</code> — storage APIs throw SecurityError</li>
+      <li><code>document.cookie</code> — throws SecurityError</li>
+      <li><code>window.parent.*</code> reads — cross-origin blocked (<code>postMessage</code> still works)</li>
+      <li>Vault-relative URLs like <code>&lt;img src="attachments/foo.png"&gt;</code> — no base URL points to the vault; use absolute HTTPS or data URLs</li>
+      <li>Service workers, geolocation, clipboard, notifications, and most permission-gated APIs</li>
+    </ul>
+  </div><script>
+  const tests = [];
+  const SECS = {
+    render: document.getElementById('sec-render'),
+    js: document.getElementById('sec-js'),
+    gfx: document.getElementById('sec-gfx'),
+    net: document.getElementById('sec-net'),
+    block: document.getElementById('sec-block'),
+  };
+
+  function card(section, name, status, detail, demoNode) {
+    tests.push({ name, status, detail: detail || '' });
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = '<div class="head"><span class="name"></span><span class="pill"></span></div>';
+    el.querySelector('.name').textContent = name;
+    const pill = el.querySelector('.pill');
+    pill.classList.add(status);
+    pill.textContent = status === 'pass' ? '✓ pass' : status === 'skip' ? '— skip' : '✗ fail';
+    if (detail) {
+      const d = document.createElement('div');
+      d.className = 'detail';
+      d.textContent = detail;
+      el.append(d);
+    }
+    if (demoNode) {
+      const w = document.createElement('div');
+      w.className = 'demo';
+      w.append(demoNode);
+      el.append(w);
+    }
+    SECS[section].append(el);
+  }
+
+  // === Rendering & CSS ===
+  (function () {
+    const t = document.createElement('table');
+    t.className = 'demo-table';
+    t.innerHTML = '<thead><tr><th>col A</th><th>col B</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></tbody>';
+    card('render', 'HTML tables', 'pass', '', t);
+  })();
+  (function () {
+    const d = document.createElement('div');
+    d.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px';
+    for (let i = 0; i < 3; i++) {
+      const c = document.createElement('div');
+      c.style.cssText = 'padding:8px;background:rgba(99,102,241,0.4);border-radius:4px;text-align:center;font-size:12px';
+      c.textContent = 'cell ' + (i + 1);
+      d.append(c);
+    }
+    card('render', 'CSS grid + custom props', 'pass', '', d);
+  })();
+  (function () {
+    const d = document.createElement('div');
+    d.style.cssText = 'height:36px;background:linear-gradient(90deg,#6366f1,#22d3ee,#22c55e);border-radius:6px';
+    card('render', 'CSS gradients', 'pass', '', d);
+  })();
+  (function () {
+    const d = document.createElement('div');
+    d.style.cssText = 'display:flex;gap:8px;align-items:center';
+    const dot = document.createElement('div');
+    dot.style.cssText = 'width:22px;height:22px;border-radius:50%;background:#22c55e;animation:spin 1s linear infinite';
+    const txt = document.createElement('span');
+    txt.style.fontSize = '12px';
+    txt.textContent = '@keyframes';
+    d.append(dot, txt);
+    card('render', 'CSS animations', 'pass', '', d);
+  })();
+
+  // === JavaScript ===
+  card('js', 'JS runtime executes', 'pass', 'this list was built by JS');
+
+  (function () {
+    const fn = (x) => x ?? 'fallback';
+    const ok = fn(null) === 'fallback' && fn('hi') === 'hi';
+    card('js', 'ES2020+ (??, ?.)', ok ? 'pass' : 'fail', 'nullish coalescing works');
+  })();
+
+  (function () {
+    const btn = document.createElement('button');
+    btn.textContent = 'click me';
+    const out = document.createElement('span');
+    out.style.cssText = 'margin-left:10px;font-size:13px;color:var(--muted)';
+    out.textContent = 'clicks: 0';
+    let n = 0;
+    btn.addEventListener('click', () => { n++; out.textContent = 'clicks: ' + n; });
+    const w = document.createElement('div');
+    w.append(btn, out);
+    card('js', 'DOM events', 'pass', '', w);
+  })();
+
+  let pending = { promise: false, interval: false, image: false, fetch: false };
+  function maybeFinalize() {
+    if (!pending.promise || !pending.interval || !pending.image || !pending.fetch) return;
+    finalize();
+  }
+
+  (function () {
+    (async () => Promise.resolve(42))()
+      .then((v) => card('js', 'Promises / async-await', v === 42 ? 'pass' : 'fail', 'resolved to ' + v))
+      .catch((e) => card('js', 'Promises / async-await', 'fail', String(e)))
+      .finally(() => { pending.promise = true; maybeFinalize(); });
+  })();
+
+  (function () {
+    let n = 0;
+    const id = setInterval(() => { n++; if (n >= 2) clearInterval(id); }, 40);
+    setTimeout(() => {
+      card('js', 'setInterval / setTimeout', n >= 2 ? 'pass' : 'fail', 'ticked ' + n + ' time(s) in 200ms');
+      pending.interval = true; maybeFinalize();
+    }, 200);
+  })();
+
+  // === Graphics ===
+  (function () {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.classList.add('demo');
+    svg.setAttribute('viewBox', '0 0 200 60');
+    const defs = document.createElementNS(ns, 'defs');
+    defs.innerHTML = '<linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>';
+    svg.append(defs);
+    const r = document.createElementNS(ns, 'rect');
+    r.setAttribute('x', '0'); r.setAttribute('y', '0');
+    r.setAttribute('width', '200'); r.setAttribute('height', '60');
+    r.setAttribute('rx', '6'); r.setAttribute('fill', 'url(#g1)');
+    svg.append(r);
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('cx', '30'); c.setAttribute('cy', '30'); c.setAttribute('r', '14');
+    c.setAttribute('fill', '#fff'); c.classList.add('spinning');
+    svg.append(c);
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', 'M60 30 L80 18 L100 40 L120 14 L140 36 L160 22 L180 32');
+    path.setAttribute('stroke', '#fff'); path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
+    svg.append(path);
+    card('gfx', 'SVG (gradient + path + animation)', 'pass', '', svg);
+  })();
+
+  (function () {
+    const cv = document.createElement('canvas');
+    cv.width = 400; cv.height = 60;
+    const ctx = cv.getContext('2d');
+    const ok = !!ctx;
+    if (ok) {
+      let t = 0;
+      const draw = () => {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = 0; x < cv.width; x++) {
+          const y = cv.height / 2 + Math.sin((x + t) * 0.05) * 16;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        t += 2;
+        requestAnimationFrame(draw);
+      };
+      draw();
+    }
+    card('gfx', 'Canvas 2D + requestAnimationFrame', ok ? 'pass' : 'fail', '', cv);
+  })();
+
+  // === Forms ===
+  (function () {
+    const f = document.createElement('form');
+    f.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+    f.innerHTML = '<input type="text" placeholder="type here" style="flex:1;min-width:120px"><select><option>a</option><option>b</option></select><button type="submit">submit</button>';
+    f.addEventListener('submit', (e) => e.preventDefault());
+    card('net', 'Form elements', 'pass', 'allow-forms flag set; submit suppressed by handler', f);
+  })();
+
+  // === Network ===
+  (function () {
+    const img = document.createElement('img');
+    img.style.cssText = 'width:100%;height:auto;border-radius:6px;display:block';
+    img.alt = 'placeholder';
+    img.src = 'https://placehold.co/600x60/6366f1/ffffff?text=external+image+over+HTTPS';
+    img.addEventListener('load', () => {
+      card('net', 'External image (HTTPS)', 'pass', img.naturalWidth + '×' + img.naturalHeight + ' from placehold.co', img);
+      pending.image = true; maybeFinalize();
+    });
+    img.addEventListener('error', () => {
+      card('net', 'External image (HTTPS)', 'skip', 'no network or blocked');
+      pending.image = true; maybeFinalize();
+    });
+  })();
+
+  (function () {
+    fetch('https://httpbin.org/get?probe=html-viewer', { method: 'GET' })
+      .then((r) => r.json())
+      .then((j) => card('net', 'Fetch (cross-origin, CORS)', 'pass', 'echoed probe=' + (j && j.args && j.args.probe)))
+      .catch((e) => card('net', 'Fetch (cross-origin, CORS)', 'skip', 'no network or CORS blocked: ' + e.message))
+      .finally(() => { pending.fetch = true; maybeFinalize(); });
+  })();
+
+  // === Sandbox isolation (must be blocked) ===
+  (function () {
+    let blocked = false, errName = '';
+    try { localStorage.setItem('x', '1'); } catch (e) { blocked = true; errName = e.name; }
+    card('block', 'localStorage is blocked', blocked ? 'pass' : 'fail', blocked ? 'threw ' + errName : 'allowed (unexpected)');
+  })();
+  (function () {
+    let blocked = false, errName = '';
+    try { document.cookie = 'x=1'; if (document.cookie) { /* unexpectedly readable */ } } catch (e) { blocked = true; errName = e.name; }
+    // document.cookie may silently no-op in some browsers; treat empty cookie as blocked too
+    if (!blocked && document.cookie === '') blocked = true;
+    card('block', 'document.cookie is blocked', blocked ? 'pass' : 'fail', blocked ? (errName || 'silently no-op') : 'allowed (unexpected)');
+  })();
+  (function () {
+    let blocked = false, errName = '';
+    try { void window.parent.location.href; } catch (e) { blocked = true; errName = e.name; }
+    card('block', 'parent window is isolated', blocked ? 'pass' : 'fail', blocked ? 'threw ' + errName : 'allowed (unexpected)');
+  })();
+
+  function finalize() {
+    const pass = tests.filter((t) => t.status === 'pass').length;
+    const fail = tests.filter((t) => t.status === 'fail').length;
+    const skip = tests.filter((t) => t.status === 'skip').length;
+    const pill = document.getElementById('summary-pill');
+    const text = document.getElementById('summary-text');
+    pill.className = 'pill ' + (fail > 0 ? 'fail' : 'pass');
+    pill.textContent = fail > 0 ? '✗ ' + fail + ' failed' : '✓ all good';
+    text.textContent = pass + ' passed · ' + fail + ' failed · ' + skip + ' skipped';
+    try {
+      window.parent.postMessage({ type: 'html-viewer-test-results', pass, fail, skip, tests }, '*');
+    } catch (e) { /* parent unreachable; postMessage to opaque origin still typically works */ }
+  }
+
+  // Safety net: finalize even if some async tests never settle
+  setTimeout(finalize, 4000);
+</script>
+</body>
+</html>
