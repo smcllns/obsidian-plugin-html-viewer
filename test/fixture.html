@@ -32,6 +32,7 @@
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 10px; border-radius: 999px;
     font-size: 12px; font-weight: 600;
+    flex-shrink: 0; white-space: nowrap;
   }
   .pill.pass { background: rgba(34,197,94,0.15); color: var(--pass); }
   .pill.fail { background: rgba(239,68,68,0.15); color: var(--fail); }
@@ -45,8 +46,8 @@
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 10px; padding: 12px 14px;
   }
-  .card .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .card .name { font-weight: 600; font-size: 14px; }
+  .card .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card .name { font-weight: 600; font-size: 14px; min-width: 0; flex: 1; }
   .card .detail { margin-top: 4px; color: var(--muted); font-size: 12px; font-family: ui-monospace, monospace; word-break: break-word; }
   .demo { margin-top: 10px; }
   table.demo-table { border-collapse: collapse; width: 100%; font-size: 12px; }
@@ -252,27 +253,40 @@
 
   // === Graphics ===
   (function () {
-    const ns = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(ns, 'svg');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.classList.add('demo');
     svg.setAttribute('viewBox', '0 0 200 60');
-    const defs = document.createElementNS(ns, 'defs');
-    defs.innerHTML = '<linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>';
-    svg.append(defs);
-    const r = document.createElementNS(ns, 'rect');
-    r.setAttribute('x', '0'); r.setAttribute('y', '0');
-    r.setAttribute('width', '200'); r.setAttribute('height', '60');
-    r.setAttribute('rx', '6'); r.setAttribute('fill', 'url(#g1)');
-    svg.append(r);
-    const c = document.createElementNS(ns, 'circle');
-    c.setAttribute('cx', '30'); c.setAttribute('cy', '30'); c.setAttribute('r', '14');
-    c.setAttribute('fill', '#fff'); c.classList.add('spinning');
-    svg.append(c);
-    const path = document.createElementNS(ns, 'path');
-    path.setAttribute('d', 'M60 30 L80 18 L100 40 L120 14 L140 36 L160 22 L180 32');
-    path.setAttribute('stroke', '#fff'); path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
-    svg.append(path);
-    card('gfx', 'SVG (gradient + path + animation)', 'pass', '', svg);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    svg.innerHTML = `
+      <defs>
+        <linearGradient id="hv-eq" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="#22d3ee"/>
+          <stop offset="1" stop-color="#6366f1"/>
+        </linearGradient>
+        <style>
+          .hv-bar { transform-box: fill-box; transform-origin: center bottom; animation: hv-pulse 1.2s ease-in-out infinite; }
+          .hv-bar:nth-child(1), .hv-bar:nth-child(7) { animation-delay: -0.6s; }
+          .hv-bar:nth-child(2), .hv-bar:nth-child(6) { animation-delay: -0.4s; }
+          .hv-bar:nth-child(3), .hv-bar:nth-child(5) { animation-delay: -0.2s; }
+          .hv-bar:nth-child(4) { animation-delay: 0s; }
+          @keyframes hv-pulse {
+            0%, 100% { transform: scaleY(0.25); }
+            50%      { transform: scaleY(1); }
+          }
+        </style>
+      </defs>
+      <rect width="200" height="60" rx="6" fill="rgba(15,23,42,0.7)"/>
+      <g fill="url(#hv-eq)">
+        <rect class="hv-bar" x="54"  y="15" width="8" height="30" rx="2"/>
+        <rect class="hv-bar" x="68"  y="15" width="8" height="30" rx="2"/>
+        <rect class="hv-bar" x="82"  y="15" width="8" height="30" rx="2"/>
+        <rect class="hv-bar" x="96"  y="15" width="8" height="30" rx="2"/>
+        <rect class="hv-bar" x="110" y="15" width="8" height="30" rx="2"/>
+        <rect class="hv-bar" x="124" y="15" width="8" height="30" rx="2"/>
+        <rect class="hv-bar" x="138" y="15" width="8" height="30" rx="2"/>
+      </g>
+    `;
+    card('gfx', 'SVG (gradients + CSS animation)', 'pass', '', svg);
   })();
 
   (function () {
@@ -312,11 +326,11 @@
   // === Network ===
   (function () {
     const img = document.createElement('img');
-    img.style.cssText = 'width:100%;height:auto;border-radius:6px;display:block';
-    img.alt = 'placeholder';
-    img.src = 'https://placehold.co/600x60/6366f1/ffffff?text=external+image+over+HTTPS';
+    img.style.cssText = 'width:100%;max-height:240px;object-fit:cover;border-radius:6px;display:block';
+    img.alt = 'cat photo from placecats.com';
+    img.src = 'https://www.placecats.com/300/300';
     img.addEventListener('load', () => {
-      card('net', 'External image (HTTPS)', 'pass', img.naturalWidth + '×' + img.naturalHeight + ' from placehold.co', img);
+      card('net', 'External image (HTTPS)', 'pass', img.naturalWidth + '×' + img.naturalHeight + ' from placecats.com', img);
       pending.image = true; maybeFinalize();
     });
     img.addEventListener('error', () => {
