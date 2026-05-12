@@ -1,4 +1,4 @@
-import { FileView, Plugin, TFile, WorkspaceLeaf } from "obsidian";
+import { FileView, Notice, Plugin, TFile, WorkspaceLeaf } from "obsidian";
 
 const VIEW_TYPE_HTML = "html-docs";
 
@@ -73,5 +73,18 @@ export default class HtmlDocsPlugin extends Plugin {
 			(leaf: WorkspaceLeaf) => new HtmlView(leaf),
 		);
 		this.registerExtensions(["html", "htm"], VIEW_TYPE_HTML);
+
+		// Obsidian hides files with unrecognized extensions in the file
+		// explorer unless 'Detect all file extensions' is on; registering
+		// the extension only routes the view, it doesn't add to that
+		// filter. Without this setting, the user never sees their .html
+		// files in the explorer.
+		const showUnsupported = (this.app.vault as any).getConfig?.("showUnsupportedFiles");
+		if (showUnsupported === false) {
+			new Notice(
+				"HTML Docs: enable 'Detect all file extensions' in Settings → Files & Links to see .html files in the file explorer.",
+				10000,
+			);
+		}
 	}
 }

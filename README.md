@@ -8,6 +8,20 @@ A minimal Obsidian plugin to bring the [unreasonable effectiveness of HTML](http
 
 Fork and extend if you want other features.
 
+## Demo
+
+This plug lets you write your docs as .md or .html and open both inside Obsidian
+
+![](demo.png)
+
+## Install (manual)
+
+1. Copy the `dist/html-docs/` folder into your vault at `<vault>/.obsidian/plugins/` (so the plugin lives at `<vault>/.obsidian/plugins/html-docs/`).
+2. Enable **HTML Docs** in Obsidian's Community Plugins settings.
+3. Turn on **Settings → Files & Links → Detect all file extensions** so `.html` files appear in the file explorer. The plugin shows a one-time notice on load if it isn't already on.
+
+To build from source instead: `npm install && npm run build` rebuilds `dist/html-docs/`.
+
 ## What works
 
 Anything an isolated page can do without server-side help: HTML, CSS (gradients, grid, animations, custom properties), JavaScript (ES2020+, Promises, `setInterval`, DOM events), inline SVG, Canvas 2D, forms, and absolute HTTPS resources (images, fetch with CORS).
@@ -25,12 +39,6 @@ Which blocks:
 - Vault-relative URLs like `<img src="attachments/foo.png">` — use absolute HTTPS or data URLs
 - Service workers, geolocation, clipboard, notifications
 
-## Install (manual)
-
-1. `npm install`
-2. `npm run build`
-3. Copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/html-docs/`.
-4. Enable **HTML Docs** in Obsidian's Community Plugins settings.
 
 ## Dev
 
