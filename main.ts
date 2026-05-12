@@ -31,13 +31,19 @@ class HtmlView extends FileView {
 		this.contentEl.empty();
 		this.contentEl.addClass("html-viewer-container");
 
-		const iframe = this.contentEl.createEl("iframe", {
-			cls: "html-viewer-iframe",
-		});
+		// Build the iframe fully detached so the browser never observes it
+		// without the sandbox attribute. Inserting first, then setting
+		// sandbox, leaves a window where the initial about:blank document
+		// is created with the parent's origin — some Chromium versions
+		// don't fully re-apply the sandbox on the subsequent srcdoc
+		// navigation, leaking same-origin privileges into user HTML.
+		const iframe = document.createElement("iframe");
+		iframe.className = "html-viewer-iframe";
 		// allow-scripts lets the page's JS run; omitting allow-same-origin
 		// keeps it isolated from Obsidian and the user's vault.
 		iframe.setAttribute("sandbox", "allow-scripts allow-popups allow-forms");
 		iframe.srcdoc = html;
+		this.contentEl.appendChild(iframe);
 		this.iframe = iframe;
 	}
 }
