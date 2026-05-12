@@ -1,27 +1,29 @@
 # HTML Viewer
 
-A minimal Obsidian plugin to bring the [unreasonanble effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
+A minimal Obsidian plugin to bring the [unreasonable effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
 
-* The html is rendered in a sandboxed `<iframe>`.
-* Javascript run for interactivity, but the iframe is isolated from Obsidian and from your vault (`sandbox="allow-scripts allow-popups allow-forms"`)
-* Nothing else
+* The HTML is rendered in a sandboxed `<iframe>`.
+* JS can run inside the HTML for interactivity, but the iframe is isolated from Obsidian and your vault (`sandbox="allow-scripts allow-popups allow-forms"`).
+* Nothing else. The plugin is ~75 lines of code, ~100 lines of config, and ~520 lines of test.
 
 Fork and extend if you want other features.
 
 ## What works
 
-HTML, CSS (gradients, grid, animations, custom properties), JavaScript (ES2020+, Promises, `setInterval`, DOM events), inline SVG, Canvas 2D, forms, and absolute HTTPS resources (images, fetch with CORS).
+Anything an isolated page can do without server-side help: HTML, CSS (gradients, grid, animations, custom properties), JavaScript (ES2020+, Promises, `setInterval`, DOM events), inline SVG, Canvas 2D, forms, and absolute HTTPS resources (images, fetch with CORS).
+
+See demo: [test/fixture.html](test/fixture.html)
 
 ## What doesn't work (by design)
 
-Without `allow-same-origin` the page has an opaque origin, so these are blocked:
+This plugin intentionally omits `allow-same-origin`, so each HTML page gets an opaque origin — the browser treats it as isolated content. JS still runs, but it can't reach your vault, your notes, or Obsidian's own data.
+
+Which blocks:
 
 - `localStorage`, `sessionStorage`, `IndexedDB`, `document.cookie`
 - Reading the parent (`window.parent.*`) — `postMessage` still works
 - Vault-relative URLs like `<img src="attachments/foo.png">` — use absolute HTTPS or data URLs
 - Service workers, geolocation, clipboard, notifications
-
-This is the security trade-off: scripts run, but a malicious or untrusted HTML file can't reach Obsidian, your vault, or your cookies.
 
 ## Install (manual)
 
@@ -51,7 +53,6 @@ npm test
 Requires Obsidian running with a vault open, the plugin installed and enabled, and `jq` available. The script copies `test/fixture.html` into the vault temporarily, opens it, verifies the iframe shape from outside Obsidian and collects the iframe's own self-test results via `postMessage`, then cleans up.
 
 See `test/fixture.html` for the full list of features exercised — and the inline notes for what is intentionally blocked.
-
 
 ## The original prompt
 
