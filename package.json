@@ -1,6 +1,6 @@
 {
 	"name": "html-docs",
-	"version": "1.0.4",
+	"version": "1.1.0",
 	"description": "A zero-dependency minimal plugin to enable .html docs inside Obsidian. Inspired by Anthropic's 'unreasonable effectiveness of HTML'",
 	"main": "main.js",
 	"scripts": {

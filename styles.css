@@ -1,7 +1,22 @@
 .html-docs-container {
 	padding: 0;
-	height: 100%;
 	width: 100%;
+}
+
+.html-docs-view,
+.canvas-node-content.html-docs-embed {
+	height: 100%;
+}
+
+.html-docs-embed {
+	max-width: 100%;
+}
+
+.markdown-rendered .html-docs-embed,
+.markdown-source-view .html-docs-embed {
+	height: var(--html-docs-embed-height, 600px);
+	max-height: var(--embed-max-height);
+	overflow: hidden;
 }
 
 .html-docs-iframe {

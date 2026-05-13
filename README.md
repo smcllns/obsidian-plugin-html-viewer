@@ -3,11 +3,11 @@
 A zero-dependency minimal plugin to enable .html docs inside Obsidian. Inspired by [Thariq's "unreasonable effectiveness of HTML"](https://x.com/trq212/status/2052809885763747935).
 
 
-* The HTML is rendered in a sandboxed `<iframe>`.
+* HTML is rendered in a sandboxed `<iframe>`, and works across tabs, embeds (`![[doc.html]]`), and Canvas.
 * JS can run inside the HTML for interactivity but the iframe is isolated from your other notes and Obsidian's own data.
 * No other bells and whistles.
 
-The plugin is ~75 lines of code, ~100 lines of config, ~520 lines of test, and requires no external dependencies.
+The plugin is ~190 lines of code, ~660 lines of test, and requires no external dependencies.
 
 ## Demo
 
@@ -43,14 +43,14 @@ npm run build    # production bundle at `dist/html-docs/`
 
 ## Test
 
-An E2E test runner validates features and sandboxing are working correctly. Requires `obsidian-cli`, Obsidian running with a vault open, the plugin installed and enabled, and `jq` available.
+An E2E test runner validates features, embeds, Canvas cards, and sandboxing are working correctly. Requires `obsidian-cli`, Obsidian running with a vault open, the plugin installed and enabled, and `jq` available.
 
 
 ```bash
 npm test
 ```
 
-The script copies `test/fixture.html` into the vault temporarily, opens it in Obsidian, uses `obsidian-cli eval` to inspect the plugin view and verify the iframe exists with the expected sandbox and blob URL settings, collects the iframe’s own self-test results via `postMessage`, then cleans up.
+The script builds the current plugin, copies it into the active vault's plugin folder, reloads it, copies `test/fixture.html` into the vault temporarily, opens it in Obsidian, verifies the tab view plus markdown and Canvas embeds, collects the iframe’s own self-test results via `postMessage`, then cleans up.
 
 See `test/fixture.html` for the full list of features exercised — and the inline notes for what is intentionally blocked.
 
@@ -62,10 +62,6 @@ See `test/fixture.html` for the full list of features exercised — and the inli
 
 This plugin will stay simple and do this one thing well.
 
-File issues here, or message me on X (@smcllns).
+File issues here, or message me on X: [@smcllns](https://x.com/smcllns).
 
 If you want more features, please fork and customize as you need.
-
-## Known Issues
-
-1. **Does not support Obsidian Canvas or embeds.** HTML files in Canvas, and embeds in a doc (e.g. `![[doc.html]]`) continue to show the same placeholder as before.
