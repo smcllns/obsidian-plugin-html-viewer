@@ -3,12 +3,11 @@
 A zero-dependency minimal plugin to enable .html docs inside Obsidian. Inspired by [Thariq's "unreasonable effectiveness of HTML"](https://x.com/trq212/status/2052809885763747935).
 
 
-* The HTML is rendered in a sandboxed `<iframe>`.
-* `.html` files work as tabs, note embeds (`![[doc.html]]`), and Canvas file cards.
+* HTML is rendered in a sandboxed `<iframe>`, and works across tabs, embeds (`![[doc.html]]`), and Canvas.
 * JS can run inside the HTML for interactivity but the iframe is isolated from your other notes and Obsidian's own data.
 * No other bells and whistles.
 
-The plugin requires no external dependencies.
+The plugin is ~190 lines of code, ~660 lines of test, and requires no external dependencies.
 
 ## Demo
 
@@ -32,24 +31,6 @@ A demo page (`test/fixture.html`) demonstrates all the passing HTML features.
 3. Enable **HTML Docs** in Obsidian's Community Plugins settings.
 
 Releases are built and signed by GitHub Actions ([.github/workflows/release.yml](.github/workflows/release.yml)) so the binaries carry a [build attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) you can verify against the source.
-
-### Embed sizing
-
-Markdown embeds default to 600px tall. To size one embed, use Obsidian's standard embed dimensions:
-
-```markdown
-![[doc.html|500x320]]
-```
-
-To change the default height for all HTML embeds, add a CSS snippet:
-
-```css
-:root {
-	--html-docs-embed-height: 720px;
-}
-```
-
-HTML embeds do not auto-fit to the page's internal height because the sandbox intentionally gives the iframe an opaque origin.
 
 ### Build and install from source
 
@@ -81,6 +62,6 @@ See `test/fixture.html` for the full list of features exercised — and the inli
 
 This plugin will stay simple and do this one thing well.
 
-File issues here, or message me on X (@smcllns).
+File issues here, or message me on X: [@smcllns](https://x.com/smcllns).
 
 If you want more features, please fork and customize as you need.
