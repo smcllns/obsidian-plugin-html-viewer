@@ -18,9 +18,27 @@ interface AppWithEmbedRegistry {
 	embedRegistry?: EmbedRegistry;
 }
 
-function renderSandboxedHtml(contentEl: HTMLElement, html: string): () => void {
+interface RenderOptions {
+	mode: "view" | "embed";
+	widthPx?: number | null;
+	heightPx?: number | null;
+}
+
+function parseDimension(value: string | null): number | null {
+	if (!value) return null;
+	const parsed = Number.parseInt(value, 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function renderSandboxedHtml(contentEl: HTMLElement, html: string, options: RenderOptions): () => void {
+	const previousWidth = contentEl.style.width;
+	const previousHeight = contentEl.style.height;
+
 	contentEl.empty();
 	contentEl.addClass("html-docs-container");
+	contentEl.addClass(options.mode === "view" ? "html-docs-view" : "html-docs-embed");
+	if (options.widthPx) contentEl.style.width = `${options.widthPx}px`;
+	if (options.heightPx) contentEl.style.height = `${options.heightPx}px`;
 
 	// Load the document via a Blob URL rather than srcdoc so anchor
 	// links (#section) and the History API navigate correctly inside
@@ -47,6 +65,10 @@ function renderSandboxedHtml(contentEl: HTMLElement, html: string): () => void {
 		URL.revokeObjectURL(blobUrl);
 		contentEl.empty();
 		contentEl.removeClass("html-docs-container");
+		contentEl.removeClass("html-docs-view");
+		contentEl.removeClass("html-docs-embed");
+		contentEl.style.width = previousWidth;
+		contentEl.style.height = previousHeight;
 	};
 }
 
@@ -77,7 +99,7 @@ class HtmlView extends FileView {
 
 	private render(html: string): void {
 		this.cleanupHtml?.();
-		this.cleanupHtml = renderSandboxedHtml(this.contentEl, html);
+		this.cleanupHtml = renderSandboxedHtml(this.contentEl, html, { mode: "view" });
 	}
 }
 
@@ -95,7 +117,11 @@ class HtmlEmbed extends Component {
 	async loadFile(): Promise<void> {
 		const content = await this.plugin.app.vault.cachedRead(this.file);
 		this.cleanupHtml?.();
-		this.cleanupHtml = renderSandboxedHtml(this.contentEl, content);
+		this.cleanupHtml = renderSandboxedHtml(this.contentEl, content, {
+			mode: "embed",
+			widthPx: parseDimension(this.contentEl.getAttribute("width")),
+			heightPx: parseDimension(this.contentEl.getAttribute("height")),
+		});
 	}
 
 	onunload(): void {

@@ -33,6 +33,24 @@ A demo page (`test/fixture.html`) demonstrates all the passing HTML features.
 
 Releases are built and signed by GitHub Actions ([.github/workflows/release.yml](.github/workflows/release.yml)) so the binaries carry a [build attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) you can verify against the source.
 
+### Embed sizing
+
+Markdown embeds default to 600px tall. To size one embed, use Obsidian's standard embed dimensions:
+
+```markdown
+![[doc.html|500x320]]
+```
+
+To change the default height for all HTML embeds, add a CSS snippet:
+
+```css
+:root {
+	--html-docs-embed-height: 720px;
+}
+```
+
+HTML embeds do not auto-fit to the page's internal height because the sandbox intentionally gives the iframe an opaque origin.
+
 ### Build and install from source
 
 ```bash

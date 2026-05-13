@@ -16,6 +16,7 @@ set -euo pipefail
 PLUGIN_ID="html-docs"
 FIXTURE_REL="_html-docs-test-fixture.html"
 EMBED_NOTE_REL="_html-docs-test-embed.md"
+SIZED_EMBED_NOTE_REL="_html-docs-test-embed-sized.md"
 CANVAS_REL="_html-docs-test-canvas.canvas"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FIXTURE_SRC="$ROOT/test/fixture.html"
@@ -54,9 +55,11 @@ echo
 
 FIXTURE_DEST="$VAULT_PATH/$FIXTURE_REL"
 EMBED_NOTE_DEST="$VAULT_PATH/$EMBED_NOTE_REL"
+SIZED_EMBED_NOTE_DEST="$VAULT_PATH/$SIZED_EMBED_NOTE_REL"
 CANVAS_DEST="$VAULT_PATH/$CANVAS_REL"
 cp "$FIXTURE_SRC" "$FIXTURE_DEST"
 printf '![[%s]]\n' "$FIXTURE_REL" > "$EMBED_NOTE_DEST"
+printf '![[%s|500x320]]\n' "$FIXTURE_REL" > "$SIZED_EMBED_NOTE_DEST"
 cat > "$CANVAS_DEST" <<EOF
 {
   "nodes": [
@@ -77,7 +80,7 @@ EOF
 cleanup() {
   # close test leaves before removing the files they display
   oeval "
-    const paths = new Set(['$FIXTURE_REL', '$EMBED_NOTE_REL', '$CANVAS_REL']);
+    const paths = new Set(['$FIXTURE_REL', '$EMBED_NOTE_REL', '$SIZED_EMBED_NOTE_REL', '$CANVAS_REL']);
     app.workspace.iterateAllLeaves((leaf) => {
       const file = leaf.view && leaf.view.file;
       if (file && paths.has(file.path)) leaf.detach();
@@ -85,7 +88,7 @@ cleanup() {
     app.workspace.getLeavesOfType('$PLUGIN_ID').forEach(l => l.detach());
     'ok'
   " >/dev/null 2>&1 || true
-  rm -f "$FIXTURE_DEST" "$EMBED_NOTE_DEST" "$CANVAS_DEST"
+  rm -f "$FIXTURE_DEST" "$EMBED_NOTE_DEST" "$SIZED_EMBED_NOTE_DEST" "$CANVAS_DEST"
 }
 trap cleanup EXIT
 
@@ -143,6 +146,7 @@ MARKDOWN_EMBED="$(oeval "
     if (view && view.setMode) view.setMode('preview');
     await new Promise(resolve => setTimeout(resolve, 1200));
     const iframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-docs-iframe');
+    const container = iframe && iframe.parentElement;
     let contentDoc = null;
     try { contentDoc = iframe ? !!iframe.contentDocument : null; } catch (e) { contentDoc = false; }
     return JSON.stringify({
@@ -153,6 +157,25 @@ MARKDOWN_EMBED="$(oeval "
       srcIsBlob: iframe ? iframe.src.startsWith('blob:') : false,
       contentDocAccessible: contentDoc,
       height: iframe ? Math.round(iframe.getBoundingClientRect().height) : 0,
+      computedContainerHeight: container ? getComputedStyle(container).height : null,
+    });
+  })()
+")"
+
+SIZED_MARKDOWN_EMBED="$(oeval "
+  (async () => {
+    const file = app.vault.getFileByPath('$SIZED_EMBED_NOTE_REL');
+    const leaf = app.workspace.getLeaf('tab');
+    await leaf.openFile(file);
+    const view = leaf.view;
+    if (view && view.setMode) view.setMode('preview');
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    const iframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-docs-iframe');
+    const container = iframe && iframe.parentElement;
+    return JSON.stringify({
+      hasIframe: !!iframe,
+      computedContainerWidth: container ? getComputedStyle(container).width : null,
+      computedContainerHeight: container ? getComputedStyle(container).height : null,
     });
   })()
 ")"
@@ -215,6 +238,10 @@ check "markdown embed iframe rendered"      "$(echo "$MARKDOWN_EMBED" | jq -r .h
 check "markdown embed sandbox locked down"  "$(echo "$MARKDOWN_EMBED" | jq -r .sandbox)"   "allow-scripts allow-popups allow-forms"
 check "markdown embed iframe.src is blob"   "$(echo "$MARKDOWN_EMBED" | jq -r .srcIsBlob)" "true"
 check "markdown embed cross-origin"         "$(echo "$MARKDOWN_EMBED" | jq -r .contentDocAccessible)" "false"
+check "markdown embed default height"       "$(echo "$MARKDOWN_EMBED" | jq -r .computedContainerHeight)" "600px"
+check "sized markdown embed iframe rendered" "$(echo "$SIZED_MARKDOWN_EMBED" | jq -r .hasIframe)" "true"
+check "sized markdown embed width"          "$(echo "$SIZED_MARKDOWN_EMBED" | jq -r .computedContainerWidth)" "500px"
+check "sized markdown embed height"         "$(echo "$SIZED_MARKDOWN_EMBED" | jq -r .computedContainerHeight)" "320px"
 check "canvas view is canvas"               "$(echo "$CANVAS_EMBED" | jq -r .viewType)" "canvas"
 check "canvas node found"                   "$(echo "$CANVAS_EMBED" | jq -r .nodeFound)" "true"
 check "canvas embed iframe rendered"        "$(echo "$CANVAS_EMBED" | jq -r .hasIframe)" "true"
