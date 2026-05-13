@@ -1,9 +1,9 @@
 {
 	"id": "html-docs",
 	"name": "HTML Docs",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"minAppVersion": "1.4.0",
-	"description": "A minimal zero-dependency plugin that lets you write docs in .md or .html and open both inside your vault.",
+	"description": "A zero-dependency minimal plugin to enable .html docs inside Obsidian. Inspired by Anthropic's 'unreasonable effectiveness of HTML'",
 	"author": "smcllns",
 	"authorUrl": "https://github.com/smcllns",
 	"isDesktopOnly": false

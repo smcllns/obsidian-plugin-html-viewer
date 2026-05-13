@@ -1,92 +1,71 @@
-# HTML Docs
+# HTML Docs Obsidian Plugin
 
-A zero-dependency minimal plugin to bring the [unreasonable effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) to Obsidian.
+A zero-dependency minimal plugin to enable .html docs inside Obsidian. Inspired by [Thariq's "unreasonable effectiveness of HTML"](https://x.com/trq212/status/2052809885763747935).
+
 
 * The HTML is rendered in a sandboxed `<iframe>`.
-* JS can run inside the HTML for interactivity, but the iframe is isolated from Obsidian and your vault.
-* Nothing else. The plugin is ~75 lines of code, ~100 lines of config, and ~520 lines of test.
+* JS can run inside the HTML for interactivity but the iframe is isolated from your other notes and Obsidian's own data.
+* No other bells and whistles.
 
-Fork and extend if you want other features.
+The plugin is ~75 lines of code, ~100 lines of config, ~520 lines of test, and requires no external dependencies.
 
 ## Demo
 
-A minimal plugin that lets you work with .md AND .html docs inside Obsidian
+A demo page (`test/fixture.html`) demonstrates all the passing HTML features.
 
 ![](demo.png)
 
-## Install
+## Installation
 
-The easy path: [install from the Obsidian Community Plugins directory](https://community.obsidian.md/plugins/html-docs), or browse to **Settings → Community plugins → Browse**, search **HTML Docs**, and click Install.
+> Note: Obsidian only shows `.md` files in your file explorer, by default. To see your `.html` files too, be sure to enable: **Settings → Files & links → Show all file types**
 
-After install, turn on **Settings → Files & Links → Detect all file extensions** so `.html` files appear in the file explorer. The plugin shows a one-time notice on load if it isn't already on.
+### Install from Obsidian directly
+
+* Go to Obsidian Community Plugins: [community.obsidian.md/plugins/html-docs](https://community.obsidian.md/plugins/html-docs)
+* Click Install
 
 ### Install manually
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/smcllns/obsidian-plugin-html-docs/releases/latest) and drop them into `<vault>/.obsidian/plugins/html-docs/`.
-2. Enable **HTML Docs** in Obsidian's Community Plugins settings.
-3. Turn on the **Detect all file extensions** setting as above.
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/smcllns/obsidian-plugin-html-docs/releases/latest)
+2. Place those files into `<vault>/.obsidian/plugins/html-docs/`.
+3. Enable **HTML Docs** in Obsidian's Community Plugins settings.
 
-Releases are built and signed by GitHub Actions ([release.yml](.github/workflows/release.yml)) so the binaries carry a [build attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) you can verify against the source.
+Releases are built and signed by GitHub Actions ([.github/workflows/release.yml](.github/workflows/release.yml)) so the binaries carry a [build attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) you can verify against the source.
 
-To build from source instead: `npm install && npm run build` produces `dist/html-docs/` ready to copy.
-
-## What works
-
-Anything an isolated page can do without server-side help: HTML, CSS (gradients, grid, animations, custom properties), JavaScript (ES2020+, Promises, `setInterval`, DOM events), inline SVG, Canvas 2D, forms, and absolute HTTPS resources (images, fetch with CORS).
-
-See demo: [test/fixture.html](test/fixture.html)
-
-## What doesn't work (by design)
-
-This plugin intentionally omits `allow-same-origin`, so each HTML page gets an opaque origin — the browser treats it as isolated content. JS still runs, but it can't reach your vault, your notes, or Obsidian's own data.
-
-Which blocks:
-
-- `localStorage`, `sessionStorage`, `IndexedDB`, `document.cookie`
-- Reading the parent (`window.parent.*`) — `postMessage` still works
-- Vault-relative URLs like `<img src="attachments/foo.png">` — use absolute HTTPS or data URLs
-- Service workers, geolocation, clipboard, notifications
-
-
-## Dev
+### Build and install from source
 
 ```bash
+git clone https://github.com/smcllns/obsidian-plugin-html-docs/
 npm install
 npm run dev      # watch + rebuild
-npm run build    # production bundle
+npm run build    # production bundle at `dist/html-docs/`
 ```
-
-Open any `.html` or `.htm` file in your vault — Obsidian will route it through the plugin's view.
-
-For a tighter loop, symlink your vault's plugin folder to the build output so every rebuild is picked up without a copy:
-
-```bash
-ln -sf "$(pwd)/dist/html-docs" "<vault>/.obsidian/plugins/html-docs"
-```
-
-Then `obsidian-cli plugin:reload id=html-docs` (or `Cmd-P → Reload app`) loads the new build.
 
 ## Test
 
-A smoke-test suite drives a running Obsidian instance via `obsidian-cli`.
+An E2E test runner validates features and sandboxing are working correctly. Requires `obsidian-cli`, Obsidian running with a vault open, the plugin installed and enabled, and `jq` available.
+
 
 ```bash
 npm test
 ```
 
-Requires Obsidian running with a vault open, the plugin installed and enabled, and `jq` available. The script copies `test/fixture.html` into the vault temporarily, opens it, verifies the iframe shape from outside Obsidian and collects the iframe's own self-test results via `postMessage`, then cleans up.
+The script copies `test/fixture.html` into the vault temporarily, opens it in Obsidian, uses `obsidian-cli eval` to inspect the plugin view and verify the iframe exists with the expected sandbox and blob URL settings, collects the iframe’s own self-test results via `postMessage`, then cleans up.
 
 See `test/fixture.html` for the full list of features exercised — and the inline notes for what is intentionally blocked.
 
-## The original prompt
+## Obsidian Official Resources
 
-```markdown
-Research obsidian plugin best practices. Then write a minimalist obsidian plugin which lets me view html files similar to md files inside obsidian.
-They will be single html files but they need to be able to run JavaScript.
+* Developer docs: [docs.obsidian.md](https://docs.obsidian.md)
 
-I want to avoid complexity and aim for a simple and reliable.
+## Feedback / Support
 
-Include a test html page which contains all the components we expect to work (include svg).
-At the bottom include any components that are known to **not** work.
-Include a test runner in the repo to exercise and validate so we have clear expectations of what should work and small automated test suite.
-```
+This plugin will stay simple and do this one thing well.
+
+File issues here, or message me on X (@smcllns).
+
+If you want more features, please fork and customize as you need.
+
+## Known Issues
+
+1. **Does not support Obsidian Canvas or embeds.** HTML files in Canvas, and embeds in a doc (e.g. `![[doc.html]]`) continue to show the same placeholder as before.

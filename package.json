@@ -1,14 +1,18 @@
 {
 	"name": "html-docs",
-	"version": "1.0.3",
-	"description": "A minimal zero-dependency Obsidian plugin that lets you write docs in .md or .html and open both inside Obsidian.",
+	"version": "1.0.4",
+	"description": "A zero-dependency minimal plugin to enable .html docs inside Obsidian. Inspired by Anthropic's 'unreasonable effectiveness of HTML'",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"test": "bash test/test.sh"
 	},
-	"keywords": [],
+	"keywords": [
+		"obsidian",
+		"html",
+		"obsidian-plugin"
+	],
 	"author": "smcllns",
 	"license": "MIT",
 	"devDependencies": {
