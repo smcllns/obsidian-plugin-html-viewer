@@ -19,7 +19,7 @@ class HtmlView extends FileView {
 	}
 
 	async onLoadFile(file: TFile): Promise<void> {
-		const content = await this.app.vault.read(file);
+		const content = await this.app.vault.cachedRead(file);
 		this.render(content);
 	}
 
@@ -75,15 +75,13 @@ export default class HtmlDocsPlugin extends Plugin {
 		this.registerExtensions(["html", "htm"], VIEW_TYPE_HTML);
 
 		// Obsidian hides files with unrecognized extensions in the file
-		// explorer unless 'Detect all file extensions' is on; registering
-		// the extension only routes the view, it doesn't add to that
-		// filter. Without this setting, the user never sees their .html
-		// files in the explorer.
+		// explorer unless "Show all file types" is on; registering the
+		// extension only routes the view, it doesn't add to that filter.
 		const vault = this.app.vault as { getConfig?: (key: string) => unknown };
 		const showUnsupported = vault.getConfig?.("showUnsupportedFiles");
 		if (showUnsupported === false) {
 			new Notice(
-				"HTML Docs: enable 'Detect all file extensions' in Settings → Files & Links to see .html files in the file explorer.",
+				"To see .html files in your file explorer, please enable 'Show all file types' in Settings → Files & Links.",
 				10000,
 			);
 		}

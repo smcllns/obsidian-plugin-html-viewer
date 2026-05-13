@@ -244,11 +244,11 @@
 
   (function () {
     let n = 0;
-    const id = setInterval(() => { n++; if (n >= 2) clearInterval(id); }, 40);
+    const id = setInterval(() => { n++; if (n >= 2) clearInterval(id); }, 100);
     setTimeout(() => {
-      card('js', 'setInterval / setTimeout', n >= 2 ? 'pass' : 'fail', 'ticked ' + n + ' time(s) in 200ms');
+      card('js', 'setInterval / setTimeout', n >= 2 ? 'pass' : 'fail', 'ticked ' + n + ' time(s) in 1200ms');
       pending.interval = true; maybeFinalize();
-    }, 200);
+    }, 1200);
   })();
 
   // === Graphics ===

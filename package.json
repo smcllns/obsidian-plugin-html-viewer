@@ -13,6 +13,14 @@
 		"html",
 		"obsidian-plugin"
 	],
+	"homepage": "https://github.com/smcllns/obsidian-plugin-html-docs#readme",
+	"bugs": {
+		"url": "https://github.com/smcllns/obsidian-plugin-html-docs/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/smcllns/obsidian-plugin-html-docs.git"
+	},
 	"author": "smcllns",
 	"license": "MIT",
 	"devDependencies": {
