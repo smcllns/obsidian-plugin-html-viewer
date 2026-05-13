@@ -1,7 +1,7 @@
 {
 	"name": "html-docs",
-	"version": "1.1.0",
-	"description": "A zero-dependency minimal plugin to enable .html docs inside Obsidian. Inspired by Anthropic's 'unreasonable effectiveness of HTML'",
+	"version": "1.1.1",
+	"description": "View local .html files in sandboxed tabs, embeds, and Canvas cards.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
