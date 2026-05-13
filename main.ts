@@ -1,4 +1,14 @@
-import { Component, FileView, Notice, Plugin, TFile, WorkspaceLeaf } from "obsidian";
+import {
+	Component,
+	FileView,
+	getLinkpath,
+	Notice,
+	type OpenViewState,
+	type PaneType,
+	Plugin,
+	TFile,
+	WorkspaceLeaf,
+} from "obsidian";
 
 const VIEW_TYPE_HTML = "html-docs";
 
@@ -24,6 +34,13 @@ interface RenderOptions {
 	heightPx?: number | null;
 }
 
+type OpenLinkText = (
+	linktext: string,
+	sourcePath: string,
+	newLeaf?: PaneType | boolean,
+	openViewState?: OpenViewState,
+) => Promise<void>;
+
 function parseDimension(value: string | null): number | null {
 	if (!value) return null;
 	const parsed = Number.parseInt(value, 10);
@@ -31,14 +48,15 @@ function parseDimension(value: string | null): number | null {
 }
 
 function renderSandboxedHtml(contentEl: HTMLElement, html: string, options: RenderOptions): () => void {
-	const previousWidth = contentEl.style.width;
-	const previousHeight = contentEl.style.height;
+	const previousStyle = contentEl.getAttr("style");
 
 	contentEl.empty();
 	contentEl.addClass("html-docs-container");
 	contentEl.addClass(options.mode === "view" ? "html-docs-view" : "html-docs-embed");
-	if (options.widthPx) contentEl.style.width = `${options.widthPx}px`;
-	if (options.heightPx) contentEl.style.height = `${options.heightPx}px`;
+	const cssProps: Record<string, string> = {};
+	if (options.widthPx) cssProps["--html-docs-width"] = `${options.widthPx}px`;
+	if (options.heightPx) cssProps["--html-docs-height"] = `${options.heightPx}px`;
+	contentEl.setCssProps(cssProps);
 
 	// Load the document via a Blob URL rather than srcdoc so anchor
 	// links (#section) and the History API navigate correctly inside
@@ -67,8 +85,7 @@ function renderSandboxedHtml(contentEl: HTMLElement, html: string, options: Rend
 		contentEl.removeClass("html-docs-container");
 		contentEl.removeClass("html-docs-view");
 		contentEl.removeClass("html-docs-embed");
-		contentEl.style.width = previousWidth;
-		contentEl.style.height = previousHeight;
+		contentEl.setAttr("style", previousStyle);
 	};
 }
 
@@ -137,6 +154,7 @@ export default class HtmlDocsPlugin extends Plugin {
 			(leaf: WorkspaceLeaf) => new HtmlView(leaf),
 		);
 		this.registerExtensions(["html"], VIEW_TYPE_HTML);
+		this.registerExistingHtmlTabNavigation();
 
 		const embedRegistry = (this.app as unknown as AppWithEmbedRegistry).embedRegistry;
 		if (!embedRegistry) {
@@ -156,5 +174,47 @@ export default class HtmlDocsPlugin extends Plugin {
 				10000,
 			);
 		}
+	}
+
+	private registerExistingHtmlTabNavigation(): void {
+		const workspace = this.app.workspace;
+		const openLinkText = workspace.openLinkText.bind(workspace) as OpenLinkText;
+
+		// There is no before-open event for file views, so handle the link
+		// navigation path before Obsidian creates another leaf.
+		workspace.openLinkText = (async (linktext, sourcePath, newLeaf, openViewState) => {
+			if (!newLeaf && openViewState?.active !== false) {
+				const file = this.resolveHtmlLink(linktext, sourcePath);
+				const leaf = file ? this.findOpenHtmlLeaf(file) : null;
+				if (leaf) {
+					workspace.setActiveLeaf(leaf, { focus: true });
+					return;
+				}
+			}
+
+			await openLinkText(linktext, sourcePath, newLeaf, openViewState);
+		}) as OpenLinkText;
+
+		this.register(() => {
+			workspace.openLinkText = openLinkText;
+		});
+	}
+
+	private resolveHtmlLink(linktext: string, sourcePath: string): TFile | null {
+		const linkpath = getLinkpath(linktext);
+		const file =
+			this.app.metadataCache.getFirstLinkpathDest(linkpath, sourcePath) ??
+			this.app.vault.getAbstractFileByPath(linkpath);
+		return file instanceof TFile && file.extension === "html" ? file : null;
+	}
+
+	private findOpenHtmlLeaf(file: TFile): WorkspaceLeaf | null {
+		let existingLeaf: WorkspaceLeaf | null = null;
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			if (existingLeaf || leaf.view.getViewType() !== VIEW_TYPE_HTML) return;
+			const view = leaf.view as HtmlView;
+			if (view.file?.path === file.path) existingLeaf = leaf;
+		});
+		return existingLeaf;
 	}
 }

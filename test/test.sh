@@ -113,7 +113,11 @@ obsidian-cli open path="$FIXTURE_REL" newtab >/dev/null
 sleep 6
 
 OUTER="$(oeval "
-  const view = app.workspace.activeLeaf && app.workspace.activeLeaf.view;
+  let view = null;
+  app.workspace.iterateAllLeaves((leaf) => {
+    const file = leaf.view && leaf.view.file;
+    if (!view && file && file.path === '$FIXTURE_REL') view = leaf.view;
+  });
   const iframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-docs-iframe');
   let contentDoc = null;
   try { contentDoc = iframe ? !!iframe.contentDocument : null; } catch (e) { contentDoc = false; }
@@ -135,6 +139,35 @@ REGISTRY="$(oeval "
     htmlEmbedRegistered: app.embedRegistry && app.embedRegistry.isExtensionRegistered('html'),
     htmEmbedRegistered: app.embedRegistry && app.embedRegistry.isExtensionRegistered('htm'),
   })
+")"
+
+DEDUPED_NAVIGATION="$(oeval "
+  (async () => {
+    const note = app.vault.getFileByPath('$EMBED_NOTE_REL');
+    const noteLeaf = app.workspace.getLeaf('tab');
+    await noteLeaf.openFile(note);
+    await app.workspace.openLinkText('$FIXTURE_REL', '$EMBED_NOTE_REL', false);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const htmlLeaves = [];
+    app.workspace.iterateAllLeaves((leaf) => {
+      const view = leaf.view;
+      const file = view && view.file;
+      if (file && file.path === '$FIXTURE_REL') {
+        htmlLeaves.push({
+          viewType: view.getViewType(),
+          active: app.workspace.activeLeaf === leaf,
+        });
+      }
+    });
+    return JSON.stringify({
+      htmlLeafCount: htmlLeaves.length,
+      activeFile: app.workspace.activeLeaf &&
+        app.workspace.activeLeaf.view &&
+        app.workspace.activeLeaf.view.file &&
+        app.workspace.activeLeaf.view.file.path,
+      activeHtmlLeaf: htmlLeaves.some((leaf) => leaf.active),
+    });
+  })()
 ")"
 
 MARKDOWN_EMBED="$(oeval "
@@ -230,6 +263,8 @@ check ".html routes to html-docs view"      "$(echo "$REGISTRY" | jq -r .htmlVie
 check ".htm is not registered"             "$(echo "$REGISTRY" | jq -r .htmViewType)" "null"
 check ".html embed registered"             "$(echo "$REGISTRY" | jq -r .htmlEmbedRegistered)" "true"
 check ".htm embed not registered"          "$(echo "$REGISTRY" | jq -r .htmEmbedRegistered)" "false"
+check "open existing html tab from link"    "$(echo "$DEDUPED_NAVIGATION" | jq -r .htmlLeafCount)" "1"
+check "existing html tab is focused"        "$(echo "$DEDUPED_NAVIGATION" | jq -r .activeFile)" "$FIXTURE_REL"
 
 echo
 echo "Embed assertions:"

@@ -7,7 +7,7 @@ A zero-dependency minimal plugin to enable .html docs inside Obsidian. Inspired 
 * JS can run inside the HTML for interactivity but the iframe is isolated from your other notes and Obsidian's own data.
 * No other bells and whistles.
 
-The plugin is ~190 lines of code, ~660 lines of test, and requires no external dependencies.
+The plugin maintains a small TypeScript surface, no runtime dependencies, and cli-driven E2E tests.
 
 ## Demo
 
@@ -48,9 +48,10 @@ An E2E test runner validates features, embeds, Canvas cards, and sandboxing are 
 
 ```bash
 npm test
+npm run release:check
 ```
 
-The script builds the current plugin, copies it into the active vault's plugin folder, reloads it, copies `test/fixture.html` into the vault temporarily, opens it in Obsidian, verifies the tab view plus markdown and Canvas embeds, collects the iframe’s own self-test results via `postMessage`, then cleans up.
+`npm run release:check` runs the production build, the official Obsidian plugin lint rules, and the E2E test. The E2E script builds the current plugin, copies it into the active vault's plugin folder, reloads it, copies `test/fixture.html` into the vault temporarily, opens it in Obsidian, verifies the tab view plus markdown and Canvas embeds, collects the iframe’s own self-test results via `postMessage`, then cleans up.
 
 See `test/fixture.html` for the full list of features exercised — and the inline notes for what is intentionally blocked.
 
