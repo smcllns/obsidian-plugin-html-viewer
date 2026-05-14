@@ -179,22 +179,30 @@ oeval "
 sleep 6
 
 OUTER="$(oeval "
-  let view = null;
-  app.workspace.iterateAllLeaves((leaf) => {
-    const file = leaf.view && leaf.view.file;
-    if (!view && file && file.path === '$FIXTURE_REL') view = leaf.view;
-  });
-  const iframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-docs-iframe');
-  let contentDoc = null;
-  try { contentDoc = iframe ? !!iframe.contentDocument : null; } catch (e) { contentDoc = false; }
-  JSON.stringify({
-    viewType: view && view.getViewType(),
-    file: view && view.file && view.file.path,
-    hasIframe: !!iframe,
-    sandbox: iframe && iframe.getAttribute('sandbox'),
-    srcIsBlob: iframe ? iframe.src.startsWith('blob:') : false,
-    contentDocAccessible: contentDoc,
-  })
+  (async () => {
+    let view = null;
+    app.workspace.iterateAllLeaves((leaf) => {
+      const file = leaf.view && leaf.view.file;
+      if (!view && file && file.path === '$FIXTURE_REL') view = leaf.view;
+    });
+    const iframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-docs-iframe');
+    let contentDoc = null;
+    try { contentDoc = iframe ? !!iframe.contentDocument : null; } catch (e) { contentDoc = false; }
+    let themeStyleInjected = false;
+    if (iframe) {
+      const html = await fetch(iframe.src).then((response) => response.text());
+      themeStyleInjected = html.includes('data-html-docs-theme') && html.includes('--obsidian-bg');
+    }
+    return JSON.stringify({
+      viewType: view && view.getViewType(),
+      file: view && view.file && view.file.path,
+      hasIframe: !!iframe,
+      sandbox: iframe && iframe.getAttribute('sandbox'),
+      srcIsBlob: iframe ? iframe.src.startsWith('blob:') : false,
+      contentDocAccessible: contentDoc,
+      themeStyleInjected,
+    });
+  })()
 ")"
 
 INNER="$(oeval "JSON.stringify(window.__hvResults)")"
@@ -296,6 +304,11 @@ MARKDOWN_EMBED="$(oeval "
     const container = iframe && iframe.parentElement;
     let contentDoc = null;
     try { contentDoc = iframe ? !!iframe.contentDocument : null; } catch (e) { contentDoc = false; }
+    let themeStyleInjected = false;
+    if (iframe) {
+      const html = await fetch(iframe.src).then((response) => response.text());
+      themeStyleInjected = html.includes('data-html-docs-theme') && html.includes('--obsidian-bg');
+    }
     return JSON.stringify({
       viewType: view && view.getViewType(),
       file: view && view.file && view.file.path,
@@ -305,6 +318,7 @@ MARKDOWN_EMBED="$(oeval "
       contentDocAccessible: contentDoc,
       height: iframe ? Math.round(iframe.getBoundingClientRect().height) : 0,
       computedContainerHeight: container ? getComputedStyle(container).height : null,
+      themeStyleInjected,
     });
   })()
 ")"
@@ -344,6 +358,11 @@ CANVAS_EMBED="$(oeval "
     const iframe = node && node.nodeEl && node.nodeEl.querySelector('iframe.html-docs-iframe');
     let contentDoc = null;
     try { contentDoc = iframe ? !!iframe.contentDocument : null; } catch (e) { contentDoc = false; }
+    let themeStyleInjected = false;
+    if (iframe) {
+      const html = await fetch(iframe.src).then((response) => response.text());
+      themeStyleInjected = html.includes('data-html-docs-theme') && html.includes('--obsidian-bg');
+    }
     return JSON.stringify({
       viewType: view && view.getViewType(),
       file: view && view.file && view.file.path,
@@ -352,6 +371,7 @@ CANVAS_EMBED="$(oeval "
       sandbox: iframe && iframe.getAttribute('sandbox'),
       srcIsBlob: iframe ? iframe.src.startsWith('blob:') : false,
       contentDocAccessible: contentDoc,
+      themeStyleInjected,
       height: iframe ? Math.round(iframe.getBoundingClientRect().height) : 0,
     });
   })()
@@ -375,6 +395,7 @@ check "iframe rendered"                    "$(echo "$OUTER" | jq -r .hasIframe)"
 check "sandbox is locked down"             "$(echo "$OUTER" | jq -r .sandbox)"   "allow-scripts allow-popups allow-forms"
 check "iframe.src is a blob URL"           "$(echo "$OUTER" | jq -r .srcIsBlob)" "true"
 check "contentDocument is cross-origin"    "$(echo "$OUTER" | jq -r .contentDocAccessible)" "false"
+check "theme style injected in tab"        "$(echo "$OUTER" | jq -r .themeStyleInjected)" "true"
 check ".html routes to html-docs view"      "$(echo "$REGISTRY" | jq -r .htmlViewType)" "html-docs"
 check ".htm is not registered"             "$(echo "$REGISTRY" | jq -r .htmViewType)" "null"
 check ".html embed registered"             "$(echo "$REGISTRY" | jq -r .htmlEmbedRegistered)" "true"
@@ -391,6 +412,7 @@ check "markdown embed iframe rendered"      "$(echo "$MARKDOWN_EMBED" | jq -r .h
 check "markdown embed sandbox locked down"  "$(echo "$MARKDOWN_EMBED" | jq -r .sandbox)"   "allow-scripts allow-popups allow-forms"
 check "markdown embed iframe.src is blob"   "$(echo "$MARKDOWN_EMBED" | jq -r .srcIsBlob)" "true"
 check "markdown embed cross-origin"         "$(echo "$MARKDOWN_EMBED" | jq -r .contentDocAccessible)" "false"
+check "markdown embed theme style injected" "$(echo "$MARKDOWN_EMBED" | jq -r .themeStyleInjected)" "true"
 check "markdown embed default height"       "$(echo "$MARKDOWN_EMBED" | jq -r .computedContainerHeight)" "600px"
 check "sized markdown embed iframe rendered" "$(echo "$SIZED_MARKDOWN_EMBED" | jq -r .hasIframe)" "true"
 check "sized markdown embed width"          "$(echo "$SIZED_MARKDOWN_EMBED" | jq -r .computedContainerWidth)" "500px"
@@ -401,6 +423,7 @@ check "canvas embed iframe rendered"        "$(echo "$CANVAS_EMBED" | jq -r .has
 check "canvas embed sandbox locked down"    "$(echo "$CANVAS_EMBED" | jq -r .sandbox)"   "allow-scripts allow-popups allow-forms"
 check "canvas embed iframe.src is blob"     "$(echo "$CANVAS_EMBED" | jq -r .srcIsBlob)" "true"
 check "canvas embed cross-origin"           "$(echo "$CANVAS_EMBED" | jq -r .contentDocAccessible)" "false"
+check "canvas embed theme style injected"   "$(echo "$CANVAS_EMBED" | jq -r .themeStyleInjected)" "true"
 
 echo
 echo "Inner assertions (iframe-side, via postMessage):"
