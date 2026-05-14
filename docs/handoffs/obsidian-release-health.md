@@ -25,6 +25,13 @@ Verification:
 
 - `npm run release:check` passed against the live Obsidian vault.
 - `git diff --check` passed.
+- `npm test` was re-run with an unrelated sentinel `.html` tab open in the live vault. The sentinel tab survived and no `_html-docs-test-*` leaves remained after cleanup.
+
+E2E tab-safety note:
+
+- The test harness now tracks leaves it creates and also finds leaves showing temporary test files during cleanup.
+- Cleanup no longer detaches all `html-docs` leaves. That matters because a user may already have unrelated HTML tabs open.
+- If any temporary test leaves remain after cleanup, the script exits with an error instead of silently leaving Obsidian dirty.
 
 Remaining caveat:
 

@@ -53,6 +53,12 @@ echo "vault:  $VAULT_PATH"
 echo "plugin: $PLUGIN_ID (enabled)"
 echo
 
+oeval "
+  window.__hvTestLeaves = new Set();
+  window.__hvPreviousLeaf = app.workspace.activeLeaf;
+  'ok'
+" >/dev/null
+
 FIXTURE_DEST="$VAULT_PATH/$FIXTURE_REL"
 EMBED_NOTE_DEST="$VAULT_PATH/$EMBED_NOTE_REL"
 SIZED_EMBED_NOTE_DEST="$VAULT_PATH/$SIZED_EMBED_NOTE_REL"
@@ -78,17 +84,66 @@ cat > "$CANVAS_DEST" <<EOF
 EOF
 
 cleanup() {
-  # close test leaves before removing the files they display
-  oeval "
-    const paths = new Set(['$FIXTURE_REL', '$EMBED_NOTE_REL', '$SIZED_EMBED_NOTE_REL', '$CANVAS_REL']);
-    app.workspace.iterateAllLeaves((leaf) => {
-      const file = leaf.view && leaf.view.file;
-      if (file && paths.has(file.path)) leaf.detach();
-    });
-    app.workspace.getLeavesOfType('$PLUGIN_ID').forEach(l => l.detach());
-    'ok'
-  " >/dev/null 2>&1 || true
+  # Close only leaves created by this test, plus any leaf displaying one of
+  # the temporary files. Never detach unrelated html-docs leaves.
+  local cleanup_result cleanup_status
+  set +e
+  cleanup_result="$(oeval "
+    (async () => {
+      const paths = new Set(['$FIXTURE_REL', '$EMBED_NOTE_REL', '$SIZED_EMBED_NOTE_REL', '$CANVAS_REL']);
+      const testLeaves = window.__hvTestLeaves || new Set();
+      app.workspace.iterateAllLeaves((leaf) => {
+        const file = leaf.view && leaf.view.file;
+        if (file && paths.has(file.path)) testLeaves.add(leaf);
+      });
+
+      const detachErrors = [];
+      for (const leaf of testLeaves) {
+        try {
+          leaf.detach();
+        } catch (e) {
+          detachErrors.push(e && e.message ? e.message : String(e));
+        }
+      }
+      await new Promise(resolve => window.setTimeout(resolve, 300));
+
+      const remaining = [];
+      app.workspace.iterateAllLeaves((leaf) => {
+        const file = leaf.view && leaf.view.file;
+        if (file && paths.has(file.path)) {
+          remaining.push({ type: leaf.view.getViewType(), path: file.path });
+        }
+      });
+
+      let restoreError = null;
+      if (window.__hvPreviousLeaf && !testLeaves.has(window.__hvPreviousLeaf)) {
+        try {
+          app.workspace.setActiveLeaf(window.__hvPreviousLeaf, { focus: true });
+        } catch (e) {
+          restoreError = e && e.message ? e.message : String(e);
+        }
+      }
+      if (window.__hvListener) window.removeEventListener('message', window.__hvListener);
+      delete window.__hvResults;
+      delete window.__hvListener;
+      delete window.__hvTestLeaves;
+      delete window.__hvPreviousLeaf;
+
+      return JSON.stringify({ remaining, detachErrors, restoreError });
+    })()
+  " 2>/dev/null)"
+  cleanup_status=$?
   rm -f "$FIXTURE_DEST" "$EMBED_NOTE_DEST" "$SIZED_EMBED_NOTE_DEST" "$CANVAS_DEST"
+  set -e
+  if [[ "$cleanup_status" -ne 0 ]]; then
+    echo "error: cleanup could not inspect Obsidian leaves" >&2
+    exit 1
+  fi
+  if [[ -n "$cleanup_result" ]] && ! echo "$cleanup_result" | jq -e '.remaining | length == 0' >/dev/null; then
+    echo "error: cleanup left temporary Obsidian test leaves open" >&2
+    echo "$cleanup_result" | jq -r '.remaining[] | "  - " + .type + " " + .path' >&2
+    exit 1
+  fi
 }
 trap cleanup EXIT
 
@@ -106,7 +161,15 @@ oeval "
 
 # Give Obsidian a moment to notice the new file, then open it.
 sleep 1
-obsidian-cli open path="$FIXTURE_REL" newtab >/dev/null
+oeval "
+  (async () => {
+    const file = app.vault.getFileByPath('$FIXTURE_REL');
+    const leaf = app.workspace.getLeaf('tab');
+    window.__hvTestLeaves.add(leaf);
+    await leaf.openFile(file);
+    return 'ok';
+  })()
+" >/dev/null
 
 # The fixture finalizes at most 4s after load. Wait a bit longer for the
 # postMessage to arrive (network-dependent tests need a buffer).
@@ -145,6 +208,7 @@ DEDUPED_NAVIGATION="$(oeval "
   (async () => {
     const note = app.vault.getFileByPath('$EMBED_NOTE_REL');
     const noteLeaf = app.workspace.getLeaf('tab');
+    window.__hvTestLeaves.add(noteLeaf);
     await noteLeaf.openFile(note);
     await app.workspace.openLinkText('$FIXTURE_REL', '$EMBED_NOTE_REL', false);
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -174,6 +238,7 @@ MARKDOWN_EMBED="$(oeval "
   (async () => {
     const file = app.vault.getFileByPath('$EMBED_NOTE_REL');
     const leaf = app.workspace.getLeaf('tab');
+    window.__hvTestLeaves.add(leaf);
     await leaf.openFile(file);
     const view = leaf.view;
     if (view && view.setMode) view.setMode('preview');
@@ -199,6 +264,7 @@ SIZED_MARKDOWN_EMBED="$(oeval "
   (async () => {
     const file = app.vault.getFileByPath('$SIZED_EMBED_NOTE_REL');
     const leaf = app.workspace.getLeaf('tab');
+    window.__hvTestLeaves.add(leaf);
     await leaf.openFile(file);
     const view = leaf.view;
     if (view && view.setMode) view.setMode('preview');
@@ -217,6 +283,7 @@ CANVAS_EMBED="$(oeval "
   (async () => {
     const file = app.vault.getFileByPath('$CANVAS_REL');
     const leaf = app.workspace.getLeaf('tab');
+    window.__hvTestLeaves.add(leaf);
     await leaf.openFile(file);
     const view = leaf.view;
     const node = Array.from(view.canvas.nodes.values()).find((n) => n.file && n.file.path === '$FIXTURE_REL');

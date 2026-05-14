@@ -9,6 +9,8 @@ Status: complete
 - [x] Preserve duplicate-tab regression test.
 - [x] Run `npm run release:check`.
 - [x] Add `CONTRIBUTING.md` to clarify bug reports vs feature forks.
+- [x] Tighten E2E cleanup so it preserves unrelated user tabs.
+- [x] Verify E2E cleanup with a live sentinel `.html` tab.
 
 Unresolved questions:
 
