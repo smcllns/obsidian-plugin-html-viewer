@@ -76,13 +76,13 @@ HTML docs receive a one-way snapshot of Obsidian theme tokens. Use fallbacks so 
 
 ```css
 :root {
-  color-scheme: light dark;
+  color-scheme: var(--obsidian-color-scheme, light dark);
   --bg: var(--obsidian-bg, light-dark(#fff, #0e1014));
   --text: var(--obsidian-text, light-dark(#16161a, #e7e9ec));
 }
 ```
 
-Available tokens: `--obsidian-bg`, `--obsidian-bg-2`, `--obsidian-text`, `--obsidian-text-muted`, `--obsidian-accent`, `--obsidian-border`, `--obsidian-font`, `--obsidian-font-mono`.
+Available tokens: `--obsidian-color-scheme`, `--obsidian-bg`, `--obsidian-bg-2`, `--obsidian-text`, `--obsidian-text-muted`, `--obsidian-accent`, `--obsidian-border`, `--obsidian-font`, `--obsidian-font-mono`.
 
 ## Obsidian Plugin Docs
 

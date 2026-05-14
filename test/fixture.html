@@ -197,7 +197,7 @@
   })();
   (function () {
     const root = getComputedStyle(document.documentElement);
-    const required = ['--obsidian-bg', '--obsidian-text', '--obsidian-accent', '--obsidian-font'];
+    const required = ['--obsidian-color-scheme', '--obsidian-bg', '--obsidian-text', '--obsidian-accent', '--obsidian-font'];
     const themeStyle = document.querySelector('style[data-html-docs-theme]');
     const themeStyleText = themeStyle ? themeStyle.textContent || '' : '';
     const missing = required.filter((name) => !root.getPropertyValue(name).trim());

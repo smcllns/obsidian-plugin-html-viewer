@@ -191,7 +191,7 @@ OUTER="$(oeval "
     let themeStyleInjected = false;
     if (iframe) {
       const html = await fetch(iframe.src).then((response) => response.text());
-      themeStyleInjected = html.includes('data-html-docs-theme') && html.includes('--obsidian-bg');
+      themeStyleInjected = /<style\\b[^>]*data-html-docs-theme/i.test(html) && /color-scheme:\\s*(light|dark);/.test(html);
     }
     return JSON.stringify({
       viewType: view && view.getViewType(),
@@ -307,7 +307,7 @@ MARKDOWN_EMBED="$(oeval "
     let themeStyleInjected = false;
     if (iframe) {
       const html = await fetch(iframe.src).then((response) => response.text());
-      themeStyleInjected = html.includes('data-html-docs-theme') && html.includes('--obsidian-bg');
+      themeStyleInjected = /<style\\b[^>]*data-html-docs-theme/i.test(html) && /color-scheme:\\s*(light|dark);/.test(html);
     }
     return JSON.stringify({
       viewType: view && view.getViewType(),
@@ -361,7 +361,7 @@ CANVAS_EMBED="$(oeval "
     let themeStyleInjected = false;
     if (iframe) {
       const html = await fetch(iframe.src).then((response) => response.text());
-      themeStyleInjected = html.includes('data-html-docs-theme') && html.includes('--obsidian-bg');
+      themeStyleInjected = /<style\\b[^>]*data-html-docs-theme/i.test(html) && /color-scheme:\\s*(light|dark);/.test(html);
     }
     return JSON.stringify({
       viewType: view && view.getViewType(),

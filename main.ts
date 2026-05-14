@@ -94,7 +94,8 @@ function buildThemeStyle(doc: Document): string {
 	const styles = doc.defaultView?.getComputedStyle(doc.body);
 	if (!styles) throw new Error("HTML Docs: unable to read Obsidian theme styles.");
 
-	const declarations = [`color-scheme: ${getColorScheme(doc)};`];
+	const colorScheme = getColorScheme(doc);
+	const declarations = [`color-scheme: ${colorScheme};`, `--obsidian-color-scheme: ${colorScheme};`];
 	for (const token of OBSIDIAN_THEME_TOKENS) {
 		const value = resolveThemeToken(doc, styles, token);
 		if (value) declarations.push(`${token.target}: ${value};`);
@@ -103,17 +104,22 @@ function buildThemeStyle(doc: Document): string {
 	return `:root {\n\t${declarations.join("\n\t")}\n}`;
 }
 
-function injectThemeStyle(html: string, themeStyle: string): string {
-	const style = `<style data-html-docs-theme>\n${themeStyle}\n</style>\n`;
-	const headOpen = /<head(?:\s[^>]*)?>/i.exec(html);
-	if (headOpen) {
-		const index = headOpen.index + headOpen[0].length;
-		return `${html.slice(0, index)}\n${style}${html.slice(index)}`;
-	}
+function serializeDoctype(doctype: DocumentType | null): string {
+	if (!doctype) return "";
+	let serialized = `<!doctype ${doctype.name}`;
+	if (doctype.publicId) serialized += ` PUBLIC "${doctype.publicId}"`;
+	if (doctype.systemId) serialized += `${doctype.publicId ? "" : " SYSTEM"} "${doctype.systemId}"`;
+	return `${serialized}>`;
+}
 
-	const doctype = /^\s*<!doctype[^>]*>\s*/i.exec(html);
-	const index = doctype ? doctype[0].length : 0;
-	return `${html.slice(0, index)}${style}${html.slice(index)}`;
+function injectThemeStyle(html: string, themeStyle: string): string {
+	const parsed = new DOMParser().parseFromString(html, "text/html");
+	const style = parsed.createElement("style");
+	style.setAttribute("data-html-docs-theme", "");
+	style.textContent = themeStyle;
+	parsed.head.appendChild(style);
+	const doctype = serializeDoctype(parsed.doctype);
+	return `${doctype ? `${doctype}\n` : ""}${parsed.documentElement.outerHTML}`;
 }
 
 function renderSandboxedHtml(contentEl: HTMLElement, html: string, options: RenderOptions): () => void {
@@ -160,6 +166,7 @@ function renderSandboxedHtml(contentEl: HTMLElement, html: string, options: Rend
 
 class HtmlView extends FileView {
 	private cleanupHtml: (() => void) | null = null;
+	private renderVersion = 0;
 
 	getViewType(): string {
 		return VIEW_TYPE_HTML;
@@ -174,18 +181,24 @@ class HtmlView extends FileView {
 	}
 
 	async onLoadFile(file: TFile): Promise<void> {
-		const content = await this.app.vault.cachedRead(file);
-		this.render(content);
+		await this.readAndRender(file);
 	}
 
 	async onUnloadFile(_file: TFile): Promise<void> {
+		this.renderVersion++;
 		this.cleanupHtml?.();
 		this.cleanupHtml = null;
 	}
 
 	async refreshTheme(): Promise<void> {
 		if (!this.file) return;
-		const content = await this.app.vault.cachedRead(this.file);
+		await this.readAndRender(this.file);
+	}
+
+	private async readAndRender(file: TFile): Promise<void> {
+		const version = ++this.renderVersion;
+		const content = await this.app.vault.cachedRead(file);
+		if (version !== this.renderVersion || this.file !== file || !this.contentEl.isConnected) return;
 		this.render(content);
 	}
 
@@ -197,6 +210,8 @@ class HtmlView extends FileView {
 
 class HtmlEmbed extends Component {
 	private cleanupHtml: (() => void) | null = null;
+	private renderVersion = 0;
+	private unloaded = false;
 
 	constructor(
 		private contentEl: HTMLElement,
@@ -207,8 +222,11 @@ class HtmlEmbed extends Component {
 	}
 
 	async loadFile(): Promise<void> {
+		if (this.unloaded) return;
 		this.plugin.trackHtmlEmbed(this);
+		const version = ++this.renderVersion;
 		const content = await this.plugin.app.vault.cachedRead(this.file);
+		if (this.unloaded || version !== this.renderVersion) return;
 		this.cleanupHtml?.();
 		this.cleanupHtml = renderSandboxedHtml(this.contentEl, content, {
 			mode: "embed",
@@ -222,6 +240,8 @@ class HtmlEmbed extends Component {
 	}
 
 	onunload(): void {
+		this.unloaded = true;
+		this.renderVersion++;
 		this.plugin.untrackHtmlEmbed(this);
 		this.cleanupHtml?.();
 		this.cleanupHtml = null;
@@ -230,6 +250,7 @@ class HtmlEmbed extends Component {
 
 export default class HtmlDocsPlugin extends Plugin {
 	private readonly htmlEmbeds = new Set<HtmlEmbed>();
+	private currentColorScheme: "light" | "dark" | null = null;
 	private themeRefreshTimeout: number | null = null;
 
 	async onload(): Promise<void> {
@@ -270,11 +291,21 @@ export default class HtmlDocsPlugin extends Plugin {
 	}
 
 	private registerThemeRefresh(): void {
-		const observer = new MutationObserver(() => this.scheduleThemeRefresh());
-		observer.observe(this.app.workspace.containerEl.ownerDocument.body, {
+		const doc = this.app.workspace.containerEl.ownerDocument;
+		this.currentColorScheme = getColorScheme(doc);
+		const refreshIfColorSchemeChanged = () => {
+			const nextColorScheme = getColorScheme(doc);
+			if (nextColorScheme === this.currentColorScheme) return;
+			this.currentColorScheme = nextColorScheme;
+			this.scheduleThemeRefresh();
+		};
+
+		const observer = new MutationObserver(refreshIfColorSchemeChanged);
+		observer.observe(doc.body, {
 			attributes: true,
 			attributeFilter: ["class"],
 		});
+		this.registerEvent(this.app.workspace.on("css-change", () => this.scheduleThemeRefresh()));
 		this.register(() => {
 			observer.disconnect();
 			if (this.themeRefreshTimeout !== null) window.clearTimeout(this.themeRefreshTimeout);
