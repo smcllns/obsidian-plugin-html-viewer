@@ -14,4 +14,5 @@ Implemented shape:
 
 Validation notes:
 - `npm test` covers token injection in tab, markdown embed, and Canvas embed modes while preserving cross-origin iframe isolation.
-- A live `obsidian-cli` probe verified theme-toggle re-render: injected `color-scheme` changed from `light` to `dark`, then the original light theme was restored.
+- `npm test` also flips parent `theme-light`/`theme-dark` classes and verifies the open HTML tab re-renders with the opposite injected `color-scheme`.
+- A live `obsidian-cli` probe also verified the real Obsidian theme toggle path: injected `color-scheme` changed from `light` to `dark`, then the original light theme was restored.

@@ -205,6 +205,53 @@ OUTER="$(oeval "
   })()
 ")"
 
+THEME_RERENDER="$(oeval "
+  (async () => {
+    const readInjectedScheme = async (iframe) => {
+      if (!iframe) return null;
+      const html = await fetch(iframe.src).then((response) => response.text());
+      return html.match(/color-scheme:\\s*(light|dark);/)?.[1] || null;
+    };
+    let view = null;
+    app.workspace.iterateAllLeaves((leaf) => {
+      const file = leaf.view && leaf.view.file;
+      if (!view && file && file.path === '$FIXTURE_REL') view = leaf.view;
+    });
+
+    const body = document.body;
+    const originalLight = body.classList.contains('theme-light');
+    const originalDark = body.classList.contains('theme-dark');
+    const result = {
+      before: null,
+      after: null,
+      target: null,
+      rerendered: false,
+      restored: false,
+    };
+
+    try {
+      const iframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-docs-iframe');
+      result.before = await readInjectedScheme(iframe);
+      result.target = result.before === 'dark' ? 'light' : 'dark';
+      body.classList.toggle('theme-light', result.target === 'light');
+      body.classList.toggle('theme-dark', result.target === 'dark');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const refreshedIframe = view && view.contentEl && view.contentEl.querySelector('iframe.html-docs-iframe');
+      result.after = await readInjectedScheme(refreshedIframe);
+      result.rerendered = !!iframe && !!refreshedIframe && iframe.src !== refreshedIframe.src;
+    } finally {
+      body.classList.toggle('theme-light', originalLight);
+      body.classList.toggle('theme-dark', originalDark);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      result.restored =
+        body.classList.contains('theme-light') === originalLight &&
+        body.classList.contains('theme-dark') === originalDark;
+    }
+
+    return JSON.stringify(result);
+  })()
+")"
+
 INNER="$(oeval "JSON.stringify(window.__hvResults)")"
 REGISTRY="$(oeval "
   JSON.stringify({
@@ -396,6 +443,9 @@ check "sandbox is locked down"             "$(echo "$OUTER" | jq -r .sandbox)"  
 check "iframe.src is a blob URL"           "$(echo "$OUTER" | jq -r .srcIsBlob)" "true"
 check "contentDocument is cross-origin"    "$(echo "$OUTER" | jq -r .contentDocAccessible)" "false"
 check "theme style injected in tab"        "$(echo "$OUTER" | jq -r .themeStyleInjected)" "true"
+check "theme class re-render flips scheme" "$(echo "$THEME_RERENDER" | jq -r '.after == .target and .before != .after')" "true"
+check "theme class re-render swaps blob"   "$(echo "$THEME_RERENDER" | jq -r .rerendered)" "true"
+check "theme class test restores classes"  "$(echo "$THEME_RERENDER" | jq -r .restored)" "true"
 check ".html routes to html-docs view"      "$(echo "$REGISTRY" | jq -r .htmlViewType)" "html-docs"
 check ".htm is not registered"             "$(echo "$REGISTRY" | jq -r .htmViewType)" "null"
 check ".html embed registered"             "$(echo "$REGISTRY" | jq -r .htmlEmbedRegistered)" "true"
