@@ -17,8 +17,6 @@ A demo page (`test/fixture.html`) demonstrates all the passing HTML features.
 
 ## Installation
 
-> Note: Obsidian only shows `.md` files in your file explorer, by default. To see your `.html` files too, be sure to enable: **Settings → Files & links → Show all file types**
-
 ### Install from Obsidian directly
 
 * Go to Obsidian Community Plugins: [community.obsidian.md/plugins/html-docs](https://community.obsidian.md/plugins/html-docs)
@@ -55,9 +53,39 @@ npm run release:check
 
 See `test/fixture.html` for the full list of features exercised — and the inline notes for what is intentionally blocked.
 
-## Obsidian Official Resources
+## Usage
+
+After installing the plugin, you can open `.html` files in Obsidian tabs (like a doc), embedded files, and canvas cards.
+
+Obsidian shows `.md` files in the file explorer by default. To see `.html` files too, enable **Settings → Files & links → Show all file types**.
+
+Link to HTML docs with the explicit `.html` extension:
+
+```markdown
+See: [[my-doc.html]]
+```
+
+Embed HTML docs like other Obsidian embeds. Embeds default to about 600px tall; adjust size with [Obsidian's embed syntax](https://obsidian.md/help/embeds):
+
+```markdown
+![[doc.html]]
+![[doc.html|600x400]]
+```
+
+## Obsidian Plugin Docs
 
 * Developer docs: [docs.obsidian.md](https://docs.obsidian.md)
+
+## Known trade-offs
+
+This HTML Docs plugin prioritizes a simple security boundary: HTML runs in a sandboxed iframe with JavaScript allowed, but without same-origin access to Obsidian or the vault.
+
+That keeps HTML documents isolated from your notes and Obsidian internals, with the following trade-offs accepted:
+
+* **Wikilinks to HTML docs need the explicit extension (`[[doc.html]]`).** Extensionless non-Markdown links are not first-class in Obsidian's link index, and click-only plugin handling would leave backlinks and unresolved-link state inconsistent.
+* **Links from HTML to Obsidian docs should use Obsidian URI links plus `target="_blank"`.** They hand off to Obsidian without letting the iframe navigate the parent window directly; direct same-tab navigation would require top-navigation sandbox permissions and weaken the boundary.
+* **Cookies, `localStorage`, `sessionStorage`, and `IndexedDB` are intentionally unavailable.** Enabling them would require same-origin privileges, which would also let HTML share origin with Obsidian instead of staying isolated.
+* **Context must be passed into the iframe, the iframe cannot reach out and pull in.** HTML can load browser-allowed network resources, but it cannot inspect Obsidian, other notes, or local vault files. So for example, the HTML page cannot access Obsidian themes, snippets, vault-relative asset paths, unless they are explicitly passed into the iframe context. Use inline CSS/assets, `data:` URLs, or browser-allowed HTTPS URLs instead.
 
 ## Feedback / Support
 
