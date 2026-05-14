@@ -48,8 +48,6 @@ function parseDimension(value: string | null): number | null {
 }
 
 function renderSandboxedHtml(contentEl: HTMLElement, html: string, options: RenderOptions): () => void {
-	const previousStyle = contentEl.getAttr("style");
-
 	contentEl.empty();
 	contentEl.addClass("html-docs-container");
 	contentEl.addClass(options.mode === "view" ? "html-docs-view" : "html-docs-embed");
@@ -85,7 +83,8 @@ function renderSandboxedHtml(contentEl: HTMLElement, html: string, options: Rend
 		contentEl.removeClass("html-docs-container");
 		contentEl.removeClass("html-docs-view");
 		contentEl.removeClass("html-docs-embed");
-		contentEl.setAttr("style", previousStyle);
+		contentEl.style.removeProperty("--html-docs-width");
+		contentEl.style.removeProperty("--html-docs-height");
 	};
 }
 
@@ -182,7 +181,7 @@ export default class HtmlDocsPlugin extends Plugin {
 
 		// There is no before-open event for file views, so handle the link
 		// navigation path before Obsidian creates another leaf.
-		workspace.openLinkText = (async (linktext, sourcePath, newLeaf, openViewState) => {
+		const wrapper = (async (linktext, sourcePath, newLeaf, openViewState) => {
 			if (!newLeaf && openViewState?.active !== false) {
 				const file = this.resolveHtmlLink(linktext, sourcePath);
 				const leaf = file ? this.findOpenHtmlLeaf(file) : null;
@@ -194,9 +193,10 @@ export default class HtmlDocsPlugin extends Plugin {
 
 			await openLinkText(linktext, sourcePath, newLeaf, openViewState);
 		}) as OpenLinkText;
+		workspace.openLinkText = wrapper;
 
 		this.register(() => {
-			workspace.openLinkText = openLinkText;
+			if (workspace.openLinkText === wrapper) workspace.openLinkText = openLinkText;
 		});
 	}
 
@@ -211,9 +211,13 @@ export default class HtmlDocsPlugin extends Plugin {
 	private findOpenHtmlLeaf(file: TFile): WorkspaceLeaf | null {
 		let existingLeaf: WorkspaceLeaf | null = null;
 		this.app.workspace.iterateAllLeaves((leaf) => {
-			if (existingLeaf || leaf.view.getViewType() !== VIEW_TYPE_HTML) return;
-			const view = leaf.view as HtmlView;
-			if (view.file?.path === file.path) existingLeaf = leaf;
+			if (existingLeaf) return;
+			const viewState = leaf.getViewState();
+			if (viewState.type !== VIEW_TYPE_HTML) return;
+			const stateFile = viewState.state?.file;
+			const statePath = typeof stateFile === "string" ? stateFile : null;
+			const livePath = leaf.view instanceof HtmlView ? leaf.view.file?.path : null;
+			if (statePath === file.path || livePath === file.path) existingLeaf = leaf;
 		});
 		return existingLeaf;
 	}

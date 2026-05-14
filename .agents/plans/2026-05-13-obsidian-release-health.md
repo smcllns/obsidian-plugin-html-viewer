@@ -11,6 +11,7 @@ Status: complete
 - [x] Add `CONTRIBUTING.md` to clarify bug reports vs feature forks.
 - [x] Tighten E2E cleanup so it preserves unrelated user tabs.
 - [x] Verify E2E cleanup with a live sentinel `.html` tab.
+- [x] Address Claude ultrareview comments before merge.
 
 Unresolved questions:
 

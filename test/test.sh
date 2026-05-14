@@ -15,6 +15,7 @@ set -euo pipefail
 
 PLUGIN_ID="html-docs"
 FIXTURE_REL="_html-docs-test-fixture.html"
+DEFERRED_FIXTURE_REL="_html-docs-test-deferred.html"
 EMBED_NOTE_REL="_html-docs-test-embed.md"
 SIZED_EMBED_NOTE_REL="_html-docs-test-embed-sized.md"
 CANVAS_REL="_html-docs-test-canvas.canvas"
@@ -60,10 +61,12 @@ oeval "
 " >/dev/null
 
 FIXTURE_DEST="$VAULT_PATH/$FIXTURE_REL"
+DEFERRED_FIXTURE_DEST="$VAULT_PATH/$DEFERRED_FIXTURE_REL"
 EMBED_NOTE_DEST="$VAULT_PATH/$EMBED_NOTE_REL"
 SIZED_EMBED_NOTE_DEST="$VAULT_PATH/$SIZED_EMBED_NOTE_REL"
 CANVAS_DEST="$VAULT_PATH/$CANVAS_REL"
 cp "$FIXTURE_SRC" "$FIXTURE_DEST"
+cp "$FIXTURE_SRC" "$DEFERRED_FIXTURE_DEST"
 printf '![[%s]]\n' "$FIXTURE_REL" > "$EMBED_NOTE_DEST"
 printf '![[%s|500x320]]\n' "$FIXTURE_REL" > "$SIZED_EMBED_NOTE_DEST"
 cat > "$CANVAS_DEST" <<EOF
@@ -90,7 +93,7 @@ cleanup() {
   set +e
   cleanup_result="$(oeval "
     (async () => {
-      const paths = new Set(['$FIXTURE_REL', '$EMBED_NOTE_REL', '$SIZED_EMBED_NOTE_REL', '$CANVAS_REL']);
+      const paths = new Set(['$FIXTURE_REL', '$DEFERRED_FIXTURE_REL', '$EMBED_NOTE_REL', '$SIZED_EMBED_NOTE_REL', '$CANVAS_REL']);
       const testLeaves = window.__hvTestLeaves || new Set();
       app.workspace.iterateAllLeaves((leaf) => {
         const file = leaf.view && leaf.view.file;
@@ -133,7 +136,7 @@ cleanup() {
     })()
   " 2>/dev/null)"
   cleanup_status=$?
-  rm -f "$FIXTURE_DEST" "$EMBED_NOTE_DEST" "$SIZED_EMBED_NOTE_DEST" "$CANVAS_DEST"
+  rm -f "$FIXTURE_DEST" "$DEFERRED_FIXTURE_DEST" "$EMBED_NOTE_DEST" "$SIZED_EMBED_NOTE_DEST" "$CANVAS_DEST"
   set -e
   if [[ "$cleanup_status" -ne 0 ]]; then
     echo "error: cleanup could not inspect Obsidian leaves" >&2
@@ -230,6 +233,52 @@ DEDUPED_NAVIGATION="$(oeval "
         app.workspace.activeLeaf.view.file &&
         app.workspace.activeLeaf.view.file.path,
       activeHtmlLeaf: htmlLeaves.some((leaf) => leaf.active),
+    });
+  })()
+")"
+
+DEFERRED_STATE_NAVIGATION="$(oeval "
+  (async () => {
+    const note = app.vault.getFileByPath('$EMBED_NOTE_REL');
+    const fakeDeferredLeaf = app.workspace.getLeaf('tab');
+    window.__hvTestLeaves.add(fakeDeferredLeaf);
+    await fakeDeferredLeaf.openFile(note);
+
+    const originalGetViewState = fakeDeferredLeaf.getViewState.bind(fakeDeferredLeaf);
+    fakeDeferredLeaf.getViewState = () => {
+      const originalState = originalGetViewState();
+      return {
+        ...originalState,
+        type: '$PLUGIN_ID',
+        state: { ...(originalState.state || {}), file: '$DEFERRED_FIXTURE_REL' },
+      };
+    };
+
+    let activeIsFakeDeferredLeaf = false;
+    try {
+      await app.workspace.openLinkText('$DEFERRED_FIXTURE_REL', '$EMBED_NOTE_REL', false);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      activeIsFakeDeferredLeaf = app.workspace.activeLeaf === fakeDeferredLeaf;
+    } finally {
+      fakeDeferredLeaf.getViewState = originalGetViewState;
+    }
+
+    const realHtmlLeaves = [];
+    app.workspace.iterateAllLeaves((leaf) => {
+      const view = leaf.view;
+      const file = view && view.file;
+      if (file && file.path === '$DEFERRED_FIXTURE_REL') {
+        realHtmlLeaves.push({
+          viewType: view.getViewType(),
+          active: app.workspace.activeLeaf === leaf,
+        });
+      }
+    });
+
+    return JSON.stringify({
+      activeIsFakeDeferredLeaf,
+      fakeDeferredLeafViewType: fakeDeferredLeaf.view && fakeDeferredLeaf.view.getViewType(),
+      realHtmlLeafCount: realHtmlLeaves.length,
     });
   })()
 ")"
@@ -332,6 +381,8 @@ check ".html embed registered"             "$(echo "$REGISTRY" | jq -r .htmlEmbe
 check ".htm embed not registered"          "$(echo "$REGISTRY" | jq -r .htmEmbedRegistered)" "false"
 check "open existing html tab from link"    "$(echo "$DEDUPED_NAVIGATION" | jq -r .htmlLeafCount)" "1"
 check "existing html tab is focused"        "$(echo "$DEDUPED_NAVIGATION" | jq -r .activeFile)" "$FIXTURE_REL"
+check "deferred html state is reused"       "$(echo "$DEFERRED_STATE_NAVIGATION" | jq -r .activeIsFakeDeferredLeaf)" "true"
+check "deferred match avoids new html tab"  "$(echo "$DEFERRED_STATE_NAVIGATION" | jq -r .realHtmlLeafCount)" "0"
 
 echo
 echo "Embed assertions:"

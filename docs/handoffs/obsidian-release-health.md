@@ -32,6 +32,14 @@ E2E tab-safety note:
 - The test harness now tracks leaves it creates and also finds leaves showing temporary test files during cleanup.
 - Cleanup no longer detaches all `html-docs` leaves. That matters because a user may already have unrelated HTML tabs open.
 - If any temporary test leaves remain after cleanup, the script exits with an error instead of silently leaving Obsidian dirty.
+- The duplicate-tab regression now also simulates a deferred `html-docs` view state so restored background tabs are covered without requiring an Obsidian restart in the test.
+
+Claude ultrareview follow-up:
+
+- `findOpenHtmlLeaf` now checks `WorkspaceLeaf.getViewState()` so deferred `html-docs` leaves can be reused.
+- The `openLinkText` wrapper only restores itself on unload if it is still the installed wrapper.
+- HTML render cleanup clears only the CSS custom properties it owns.
+- CI now explicitly scopes `GITHUB_TOKEN` to `contents: read`.
 
 Remaining caveat:
 
