@@ -1,11 +1,11 @@
 .html-docs-container {
 	padding: 0;
-	width: 100%;
+	width: var(--html-docs-width, 100%);
 }
 
 .html-docs-view,
 .canvas-node-content.html-docs-embed {
-	height: 100%;
+	height: var(--html-docs-height, 100%);
 }
 
 .html-docs-embed {
@@ -14,7 +14,7 @@
 
 .markdown-rendered .html-docs-embed,
 .markdown-source-view .html-docs-embed {
-	height: var(--html-docs-embed-height, 600px);
+	height: var(--html-docs-height, var(--html-docs-embed-height, 600px));
 	max-height: var(--embed-max-height);
 	overflow: hidden;
 }

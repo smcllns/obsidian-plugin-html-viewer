@@ -1,0 +1,46 @@
+# Obsidian Release Health Handoff
+
+This branch adds local and CI checks to catch Obsidian community-directory review issues before publishing.
+
+Official sources used:
+
+- `docs.obsidian.md` release docs: directory reads root `manifest.json`, then installs assets from the GitHub release matching `manifest.version`; plugin is not installable until automated review passes.
+- `obsidianmd/eslint-plugin`: official ESLint rules for Obsidian developer guidelines.
+- `obsidianmd/obsidian-sample-plugin`: current sample plugin build/lint workflow pattern.
+- `obsidianmd/obsidian-releases`: legacy/public validation workflow for plugin entries and manifest/release checks.
+
+Important changes:
+
+- `npm run lint` now runs `eslint-plugin-obsidianmd`.
+- `npm run release:check` runs build, official lint, and the live Obsidian E2E test.
+- GitHub CI runs build + lint on Node 20 and 22.
+- Release workflow now runs lint before attestation/release creation.
+- `CONTRIBUTING.md` was added to satisfy the missing contributing guide health signal while preserving the project policy: bug reports are welcome, feature expansion should happen in forks.
+- Lint surfaced and fixed:
+  - `Vault.getFileByPath` was newer than `minAppVersion: 1.4.0`; replaced with `getAbstractFileByPath` plus `instanceof TFile`.
+  - Direct `contentEl.style.*` assignment violated Obsidian's no hardcoded styling rule; moved dimensions to CSS variables via `setCssProps`.
+  - The `openLinkText` wrapper needed a typed bound original function.
+
+Verification:
+
+- `npm run release:check` passed against the live Obsidian vault.
+- `git diff --check` passed.
+- `npm test` was re-run with an unrelated sentinel `.html` tab open in the live vault. The sentinel tab survived and no `_html-docs-test-*` leaves remained after cleanup.
+
+E2E tab-safety note:
+
+- The test harness now tracks leaves it creates and also finds leaves showing temporary test files during cleanup.
+- Cleanup no longer detaches all `html-docs` leaves. That matters because a user may already have unrelated HTML tabs open.
+- If any temporary test leaves remain after cleanup, the script exits with an error instead of silently leaving Obsidian dirty.
+- The duplicate-tab regression now also simulates a deferred `html-docs` view state so restored background tabs are covered without requiring an Obsidian restart in the test.
+
+Claude ultrareview follow-up:
+
+- `findOpenHtmlLeaf` now checks `WorkspaceLeaf.getViewState()` so deferred `html-docs` leaves can be reused.
+- The `openLinkText` wrapper only restores itself on unload if it is still the installed wrapper.
+- HTML render cleanup clears only the CSS custom properties it owns.
+- CI now explicitly scopes `GITHUB_TOKEN` to `contents: read`.
+
+Remaining caveat:
+
+- `npm audit` still reports the existing moderate esbuild advisory for the dev server path. This repo uses esbuild build/watch, not `serve`, so it was left out of this change.

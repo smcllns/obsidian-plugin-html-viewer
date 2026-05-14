@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
@@ -28,6 +28,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Lint
+        run: npm run lint
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
