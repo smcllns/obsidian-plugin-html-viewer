@@ -38,6 +38,7 @@ jobs:
           subject-path: |
             dist/html-docs/main.js
             dist/html-docs/manifest.json
+            dist/html-docs/SKILL.md
             dist/html-docs/styles.css
 
       - name: Create GitHub Release
@@ -50,4 +51,5 @@ jobs:
             --generate-notes \
             dist/html-docs/main.js \
             dist/html-docs/manifest.json \
+            dist/html-docs/SKILL.md \
             dist/html-docs/styles.css
