@@ -196,6 +196,27 @@
     card('render', 'CSS gradients', 'pass', '', d);
   })();
   (function () {
+    const root = getComputedStyle(document.documentElement);
+    const required = ['--obsidian-color-scheme', '--obsidian-bg', '--obsidian-text', '--obsidian-accent', '--obsidian-font'];
+    const themeStyle = document.querySelector('style[data-html-docs-theme]');
+    const themeStyleText = themeStyle ? themeStyle.textContent || '' : '';
+    const missing = required.filter((name) => !root.getPropertyValue(name).trim());
+    const unresolved = required.filter((name) => root.getPropertyValue(name).includes('var('));
+    const colorScheme = root.colorScheme.trim();
+    const demo = document.createElement('div');
+    demo.style.cssText = 'padding:10px;border:1px solid var(--obsidian-border);background:var(--obsidian-bg);color:var(--obsidian-text);font-family:var(--obsidian-font);border-radius:6px';
+    demo.textContent = 'Obsidian theme token sample';
+    const hasInjectedScheme = /color-scheme:\s*(light|dark);/.test(themeStyleText);
+    const ok = !!themeStyle && missing.length === 0 && unresolved.length === 0 && hasInjectedScheme;
+    card(
+      'render',
+      'Obsidian theme tokens',
+      ok ? 'pass' : 'fail',
+      ok ? 'color-scheme: ' + colorScheme : 'missing/unresolved: ' + ([...missing, ...unresolved].join(', ') || 'color-scheme'),
+      demo,
+    );
+  })();
+  (function () {
     const d = document.createElement('div');
     d.style.cssText = 'display:flex;gap:8px;align-items:center';
     const dot = document.createElement('div');

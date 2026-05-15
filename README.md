@@ -72,6 +72,18 @@ Embed HTML docs like other Obsidian embeds. Embeds default to about 600px tall; 
 ![[doc.html|600x400]]
 ```
 
+Each iframe receives a one-way snapshot of Obsidian theme styles. HTML docs can use these CSS variables to match light/dark mode, theme colors, and fonts without giving the iframe permission to read Obsidian or the vault. Use fallbacks so files still work outside Obsidian:
+
+```css
+:root {
+  color-scheme: var(--obsidian-color-scheme, light dark);
+  --bg: var(--obsidian-bg, light-dark(#fff, #0e1014));
+  --text: var(--obsidian-text, light-dark(#16161a, #e7e9ec));
+}
+```
+
+Available CSS variables: `--obsidian-color-scheme`, `--obsidian-bg`, `--obsidian-bg-2`, `--obsidian-text`, `--obsidian-text-muted`, `--obsidian-accent`, `--obsidian-border`, `--obsidian-font`, `--obsidian-font-mono`.
+
 ## Obsidian Plugin Docs
 
 * Developer docs: [docs.obsidian.md](https://docs.obsidian.md)
@@ -85,7 +97,7 @@ That keeps HTML documents isolated from your notes and Obsidian internals, with 
 * **Wikilinks to HTML docs need the explicit extension (`[[doc.html]]`).** Extensionless non-Markdown links are not first-class in Obsidian's link index, and click-only plugin handling would leave backlinks and unresolved-link state inconsistent.
 * **Links from HTML to Obsidian docs should use Obsidian URI links plus `target="_blank"`.** They hand off to Obsidian without letting the iframe navigate the parent window directly; direct same-tab navigation would require top-navigation sandbox permissions and weaken the boundary.
 * **Cookies, `localStorage`, `sessionStorage`, and `IndexedDB` are intentionally unavailable.** Enabling them would require same-origin privileges, which would also let HTML share origin with Obsidian instead of staying isolated.
-* **Context must be passed into the iframe, the iframe cannot reach out and pull in.** HTML can load browser-allowed network resources, but it cannot inspect Obsidian, other notes, or local vault files. So for example, the HTML page cannot access Obsidian themes, snippets, vault-relative asset paths, unless they are explicitly passed into the iframe context. Use inline CSS/assets, `data:` URLs, or browser-allowed HTTPS URLs instead.
+* **Context must be passed into the iframe, the iframe cannot reach out and pull in.** HTML receives curated theme tokens, but cannot inspect Obsidian, other notes, snippets, or local vault files. Use inline CSS/assets, `data:` URLs, or browser-allowed HTTPS URLs instead of vault-relative asset paths.
 
 ## Feedback / Support
 
