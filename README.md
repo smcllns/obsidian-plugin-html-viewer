@@ -72,7 +72,7 @@ Embed HTML docs like other Obsidian embeds. Embeds default to about 600px tall; 
 ![[doc.html|600x400]]
 ```
 
-HTML docs receive a one-way snapshot of Obsidian theme tokens. Use fallbacks so files still work outside Obsidian:
+Each iframe receives a one-way snapshot of Obsidian theme styles. HTML docs can use these CSS variables to match light/dark mode, theme colors, and fonts without giving the iframe permission to read Obsidian or the vault. Use fallbacks so files still work outside Obsidian:
 
 ```css
 :root {
@@ -82,7 +82,7 @@ HTML docs receive a one-way snapshot of Obsidian theme tokens. Use fallbacks so 
 }
 ```
 
-Available tokens: `--obsidian-color-scheme`, `--obsidian-bg`, `--obsidian-bg-2`, `--obsidian-text`, `--obsidian-text-muted`, `--obsidian-accent`, `--obsidian-border`, `--obsidian-font`, `--obsidian-font-mono`.
+Available CSS variables: `--obsidian-color-scheme`, `--obsidian-bg`, `--obsidian-bg-2`, `--obsidian-text`, `--obsidian-text-muted`, `--obsidian-accent`, `--obsidian-border`, `--obsidian-font`, `--obsidian-font-mono`.
 
 ## Obsidian Plugin Docs
 
