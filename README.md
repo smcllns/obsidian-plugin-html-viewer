@@ -30,6 +30,13 @@ A demo page (`test/fixture.html`) demonstrates all the passing HTML features.
 
 Releases are built and signed by GitHub Actions ([.github/workflows/release.yml](.github/workflows/release.yml)) so the binaries carry a [build attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) you can verify against the source.
 
+### Optional Agent Skill
+
+There is an optional agent skill so your agent can author HTML that fits this plugin's sandbox, theme tokens, assets, and embeds.
+
+- Skills CLI: `npx skills add smcllns/skills --skill obsidian-html-docs`
+- Manual: [smcllns/skills/skills/obsidian-html-docs/SKILL.md](https://github.com/smcllns/skills/blob/main/skills/obsidian-html-docs/SKILL.md)
+
 ### Build and install from source
 
 ```bash
