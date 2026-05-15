@@ -3,7 +3,8 @@
 Scope:
 - [x] Sync `main` to merged PR #8.
 - [x] Rebase PR #7 branch onto theme-token work.
-- [x] Update canonical `.agents/SKILL.md` for real theme-token injection.
+- [x] Update canonical root `SKILL.md` for real theme-token injection.
+- [x] Keep `.agents/SKILL.md` as the local-agent mirror.
 - [x] Bundle `SKILL.md` into `dist/html-docs/` during build.
 - [x] Include bundled `SKILL.md` in release upload/provenance.
 - [x] Clarify README optional agent-skill install/discovery.
@@ -14,7 +15,8 @@ Scope:
 - [x] Add `skills.sh` install command to README.
 
 Decisions:
-- Plugin repo is canonical source.
+- Plugin repo root `SKILL.md` is the canonical source.
+- `.agents/SKILL.md` mirrors the canonical source for local agent discovery.
 - `smcllns/skills` is the installable mirror.
 - Obsidian plugin install does not install agent skills.
 - Plugin runtime must not write to agent install roots or dotfiles.
