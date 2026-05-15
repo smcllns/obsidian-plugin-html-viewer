@@ -16,7 +16,7 @@ const distDir = path.join("dist", "html-docs");
 fs.mkdirSync(distDir, { recursive: true });
 fs.copyFileSync("manifest.json", path.join(distDir, "manifest.json"));
 fs.copyFileSync("styles.css", path.join(distDir, "styles.css"));
-fs.copyFileSync(path.join(".agents", "SKILL.md"), path.join(distDir, "SKILL.md"));
+fs.copyFileSync("SKILL.md", path.join(distDir, "SKILL.md"));
 
 const context = await esbuild.context({
 	banner: { js: banner },

@@ -7,7 +7,7 @@
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"lint": "eslint .",
-		"release:check": "npm run build && npm run lint && npm test",
+		"release:check": "bun run build && bun run lint && bun run test",
 		"test": "bash test/test.sh"
 	},
 	"keywords": [

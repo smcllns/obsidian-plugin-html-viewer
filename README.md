@@ -15,36 +15,24 @@ A demo page (`test/fixture.html`) demonstrates all the passing HTML features.
 
 ![](demo.png)
 
-## Installation
+## Install Obsidian Plugin
 
-### Install from Obsidian directly
-
-* Go to Obsidian Community Plugins: [community.obsidian.md/plugins/html-docs](https://community.obsidian.md/plugins/html-docs)
-* Click Install
-
-### Install manually
-
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/smcllns/obsidian-plugin-html-docs/releases/latest)
-2. Place those files into `<vault>/.obsidian/plugins/html-docs/`.
-3. Enable **HTML Docs** in Obsidian's Community Plugins settings.
-
-Releases are built and signed by GitHub Actions ([.github/workflows/release.yml](.github/workflows/release.yml)) so the binaries carry a [build attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) you can verify against the source.
-
-### Optional Agent Skill
-
-There is an optional agent skill so your agent can author HTML that fits this plugin's sandbox, theme tokens, assets, and embeds.
-
-- Skills CLI: `npx skills add smcllns/skills --skill obsidian-html-docs`
-- Manual: [smcllns/skills/skills/obsidian-html-docs/SKILL.md](https://github.com/smcllns/skills/blob/main/skills/obsidian-html-docs/SKILL.md)
-
-### Build and install from source
+* Install from Obsidian Community: [HTML Docs](https://community.obsidian.md/plugins/html-docs)
+* Build and install from source:
 
 ```bash
 git clone https://github.com/smcllns/obsidian-plugin-html-docs/
-npm install
-npm run dev      # watch + rebuild
-npm run build    # production bundle at `dist/html-docs/`
+bun install
+bun run dev      # watch + rebuild
+bun run build    # production bundle at `dist/html-docs/`
 ```
+
+### Download Agent Skill (optional)
+
+There is an optional agent skill so your agent can author HTML that fits this plugin's sandbox, theme tokens, assets, and embeds.
+
+* Skills CLI: `npx skills add smcllns/skills --skill obsidian-html-docs`
+* Manual: [SKILL.md](https://github.com/smcllns/obsidian-plugin-html-docs/blob/main/SKILL.md) (~850 tokens)
 
 ## Test
 
@@ -52,11 +40,11 @@ An E2E test runner validates features, embeds, Canvas cards, and sandboxing are 
 
 
 ```bash
-npm test
-npm run release:check
+bun run test
+bun run release:check
 ```
 
-`npm run release:check` runs the production build, the official Obsidian plugin lint rules, and the E2E test. The E2E script builds the current plugin, copies it into the active vault's plugin folder, reloads it, copies `test/fixture.html` into the vault temporarily, opens it in Obsidian, verifies the tab view plus markdown and Canvas embeds, collects the iframe’s own self-test results via `postMessage`, then cleans up.
+`bun run release:check` runs the production build, the official Obsidian plugin lint rules, and the E2E test. The E2E script builds the current plugin, copies it into the active vault's plugin folder, reloads it, copies `test/fixture.html` into the vault temporarily, opens it in Obsidian, verifies the tab view plus markdown and Canvas embeds, collects the iframe’s own self-test results via `postMessage`, then cleans up.
 
 See `test/fixture.html` for the full list of features exercised — and the inline notes for what is intentionally blocked.
 
@@ -78,18 +66,6 @@ Embed HTML docs like other Obsidian embeds. Embeds default to about 600px tall; 
 ![[doc.html]]
 ![[doc.html|600x400]]
 ```
-
-Each iframe receives a one-way snapshot of Obsidian theme styles. HTML docs can use these CSS variables to match light/dark mode, theme colors, and fonts without giving the iframe permission to read Obsidian or the vault. Use fallbacks so files still work outside Obsidian:
-
-```css
-:root {
-  color-scheme: var(--obsidian-color-scheme, light dark);
-  --bg: var(--obsidian-bg, light-dark(#fff, #0e1014));
-  --text: var(--obsidian-text, light-dark(#16161a, #e7e9ec));
-}
-```
-
-Available CSS variables: `--obsidian-color-scheme`, `--obsidian-bg`, `--obsidian-bg-2`, `--obsidian-text`, `--obsidian-text-muted`, `--obsidian-accent`, `--obsidian-border`, `--obsidian-font`, `--obsidian-font-mono`.
 
 ## Obsidian Plugin Docs
 
